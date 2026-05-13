@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checador Asistencia QR</title>
+  <link rel="stylesheet" href="./style.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-container">
+    <nav class="sidebar">
+      <div class="logo">
+        <i class="fa-solid fa-qrcode fa-2x"></i>
+        <h2>Checador QR</h2>
+      </div>
+      <ul class="nav-links">
+        <li class="active" data-view="scanner-view"><i class="fa-solid fa-camera"></i> Escáner</li>
+        <li data-view="users-view"><i class="fa-solid fa-users"></i> Empleados</li>
+        <li data-view="reports-view"><i class="fa-solid fa-chart-bar"></i> Reportes</li>
+      </ul>
+    </nav>
+
+    <main class="content">
+      <!-- Escáner View -->
+      <section id="scanner-view" class="view active-view">
+        <div class="header">
+          <h1>Terminal de Asistencia</h1>
+          <p>Muestra tu código QR a la cámara para registrar tu entrada o salida.</p>
+        </div>
+        
+        <div class="scanner-container">
+          <div class="camera-wrapper">
+            <div id="reader"></div>
+            <!-- Video invisible para captura de foto -->
+            <video id="photo-video" autoplay playsinline style="display: none;"></video>
+            <canvas id="photo-canvas" style="display: none;"></canvas>
+          </div>
+          
+          <div class="status-panel" id="scan-status">
+            <i class="fa-solid fa-camera fa-3x" style="color: #6c757d; margin-bottom: 1rem;"></i>
+            <h3>Esperando Código QR...</h3>
+            <p>Por favor, ubica el QR dentro del marco.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Users View -->
+      <section id="users-view" class="view">
+        <div class="header">
+          <h1>Gestión de Empleados</h1>
+          <p>Administra los empleados, crea nuevos o sube un archivo Excel.</p>
+        </div>
+
+        <div class="card">
+          <div class="upload-area" id="upload-area">
+            <i class="fa-solid fa-cloud-arrow-up fa-3x"></i>
+            <h3>Subir Archivo Excel</h3>
+            <p>Soporta columnas: Nombre, Área, Puesto, Tipo</p>
+            <input type="file" id="excel-file" accept=".xlsx, .xls" style="display: none;">
+          </div>
+        </div>
+
+        <div class="card mt-2">
+          <div class="flex-between">
+            <h2>Lista de Empleados</h2>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn btn-secondary" onclick="window.print()"><i class="fa-solid fa-print"></i> QRs</button>
+              <button class="btn btn-primary" id="btn-new-employee"><i class="fa-solid fa-plus"></i> Nuevo</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table" id="users-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Área / Puesto</th>
+                  <th>Tipo</th>
+                  <th>Estado</th>
+                  <th>QR</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Contenido Dinámico -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reports View -->
+      <section id="reports-view" class="view">
+        <div class="header">
+          <h1>Reporte de Asistencias</h1>
+          <p>Historial de entradas y salidas con captura fotográfica.</p>
+        </div>
+
+        <div class="card">
+          <div class="table-responsive">
+            <table class="table" id="reports-table">
+              <thead>
+                <tr>
+                  <th>Empleado</th>
+                  <th>ID</th>
+                  <th>Tipo</th>
+                  <th>Hora</th>
+                  <th>Foto</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Contenido Dinámico -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal Form -->
+  <div class="modal-overlay" id="employee-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Nuevo Empleado</h2>
+        <button class="close-modal" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="employee-form">
+        <input type="hidden" id="employee-id">
+        <div class="form-group">
+          <label>Nombre Completo</label>
+          <input type="text" id="employee-name" required placeholder="Ej. Juan Pérez">
+        </div>
+        <div class="form-group">
+          <label>Área o Departamento</label>
+          <input type="text" id="employee-area" placeholder="Ej. Ventas">
+        </div>
+        <div class="form-group">
+          <label>Puesto</label>
+          <input type="text" id="employee-position" placeholder="Ej. Asesor Comercial">
+        </div>
+        <div class="form-group">
+          <label>Tipo de Empleado</label>
+          <select id="employee-type">
+            <option value="Base">De Base</option>
+            <option value="Honorarios">Por Honorarios</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- QR Modal -->
+  <div class="modal-overlay" id="qr-modal">
+    <div class="modal" style="text-align: center; max-width: 400px;">
+      <div class="modal-header">
+        <h2 id="qr-modal-name">Código QR</h2>
+        <button class="close-modal" id="btn-close-qr-modal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div style="background: white; padding: 15px; border-radius: 0.5rem; display: inline-block; margin-bottom: 1rem;">
+        <img id="qr-modal-img" src="" alt="QR en grande" style="width: 100%; max-width: 300px; height: auto;">
+      </div>
+      <p id="qr-modal-id" style="color: var(--text-muted);"></p>
+      <div class="modal-footer" style="justify-content: center;">
+        <button class="btn btn-primary" id="btn-download-qr"><i class="fa-solid fa-download"></i> Descargar QR</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
