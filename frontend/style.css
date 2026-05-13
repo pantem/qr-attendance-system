@@ -362,3 +362,60 @@ body {
 .badge-neutral { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.4); }
 .user-inactive td { opacity: 0.5; }
 .user-inactive td:last-child, .user-inactive td:nth-child(4) { opacity: 1; }
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    height: 100vh;
+    z-index: 50;
+    transition: left 0.3s ease;
+    box-shadow: 4px 0 10px rgba(0,0,0,0.5);
+  }
+  
+  .sidebar.open {
+    left: 0;
+  }
+  
+  .mobile-header {
+    display: flex;
+  }
+  
+  .content {
+    padding: 1.5rem 1rem;
+  }
+  
+  .scanner-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .flex-between {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .camera-wrapper {
+    min-height: 300px;
+  }
+  
+  .status-panel {
+    padding: 1.5rem 1rem;
+  }
+}

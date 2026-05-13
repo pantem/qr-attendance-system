@@ -6,6 +6,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const navLinks = document.querySelectorAll('.nav-links li');
   const views = document.querySelectorAll('.view');
 
+  const menuToggle = document.getElementById('menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+
+  if(menuToggle) {
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+    });
+  }
+
   navLinks.forEach(link => {
     link.addEventListener('click', () => {
       navLinks.forEach(l => l.classList.remove('active'));
@@ -17,6 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (targetViewId === 'users-view') loadUsers();
       else if (targetViewId === 'reports-view') loadReports();
+      
+      // Close sidebar on mobile
+      if (window.innerWidth <= 768) {
+        sidebar.classList.remove('open');
+      }
     });
   });
 
