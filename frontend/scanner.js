@@ -6,6 +6,9 @@ export function initScanner() {
   const html5QrCode = new Html5Qrcode("reader");
   const canvasElem = document.getElementById("photo-canvas");
   const statusPanel = document.getElementById("scan-status");
+  const countdownOverlay = document.getElementById("countdown-overlay");
+  const countdownNumber = document.getElementById("countdown-number");
+  const countdownInput = document.getElementById("countdown-time");
   
   let isProcessing = false;
 
@@ -28,6 +31,33 @@ export function initScanner() {
     // Pausar escáner para evitar múltiples escaneos
     html5QrCode.pause();
 
+    let timeLeft = parseInt(countdownInput.value) || 0;
+
+    if (timeLeft > 0) {
+      statusPanel.innerHTML = `
+        <i class="fa-solid fa-user-check fa-3x" style="color: var(--primary); margin-bottom: 1rem;"></i>
+        <h3>QR Detectado</h3>
+        <p>Por favor, mira a la cámara...</p>
+      `;
+      countdownOverlay.classList.add('active');
+      countdownNumber.textContent = timeLeft;
+
+      const timer = setInterval(async () => {
+        timeLeft--;
+        if (timeLeft > 0) {
+          countdownNumber.textContent = timeLeft;
+        } else {
+          clearInterval(timer);
+          countdownOverlay.classList.remove('active');
+          await processAttendance(decodedText);
+        }
+      }, 1000);
+    } else {
+      await processAttendance(decodedText);
+    }
+  };
+
+  const processAttendance = async (decodedText) => {
     statusPanel.innerHTML = `
       <i class="fa-solid fa-spinner fa-spin fa-3x" style="color: var(--primary); margin-bottom: 1rem;"></i>
       <h3>Procesando...</h3>
