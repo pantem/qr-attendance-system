@@ -50,6 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const username = document.getElementById('login-username').value;
     const password = document.getElementById('login-password').value;
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Ingresando...';
+
     try {
       const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -66,6 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (error) {
       alert('Error de conexión');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
     }
   });
 
