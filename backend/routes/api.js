@@ -5,6 +5,7 @@ const xlsx = require('xlsx');
 const qrcode = require('qrcode');
 const User = require('../models/User');
 const Attendance = require('../models/Attendance');
+const { protect } = require('../middleware/auth');
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -16,7 +17,7 @@ const getColValue = (row, possibleNames) => {
 };
 
 // POST /api/users/upload - Sube Excel y genera/actualiza usuarios y QRs
-router.post('/users/upload', upload.single('file'), async (req, res) => {
+router.post('/users/upload', protect, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No se subió ningún archivo' });
 
@@ -81,7 +82,7 @@ router.post('/users/upload', upload.single('file'), async (req, res) => {
 });
 
 // GET /api/users - Listar usuarios
-router.get('/users', async (req, res) => {
+router.get('/users', protect, async (req, res) => {
   try {
     const users = await User.find().sort({ isActive: -1, createdAt: -1 });
     res.json(users);
@@ -91,7 +92,7 @@ router.get('/users', async (req, res) => {
 });
 
 // POST /api/users - Crear usuario manual
-router.post('/users', async (req, res) => {
+router.post('/users', protect, async (req, res) => {
   try {
     const { name, area, position, employeeType } = req.body;
     if (!name) return res.status(400).json({ message: 'El nombre es requerido' });
@@ -111,7 +112,7 @@ router.post('/users', async (req, res) => {
 });
 
 // PUT /api/users/:id - Actualizar usuario
-router.put('/users/:id', async (req, res) => {
+router.put('/users/:id', protect, async (req, res) => {
   try {
     const { name, area, position, employeeType } = req.body;
     const user = await User.findByIdAndUpdate(req.params.id, 
@@ -126,7 +127,7 @@ router.put('/users/:id', async (req, res) => {
 });
 
 // PATCH /api/users/:id/status - Activar/Desactivar
-router.patch('/users/:id/status', async (req, res) => {
+router.patch('/users/:id/status', protect, async (req, res) => {
   try {
     const { isActive } = req.body;
     const user = await User.findByIdAndUpdate(req.params.id, { isActive }, { new: true });
@@ -164,7 +165,7 @@ router.post('/attendance', async (req, res) => {
 });
 
 // GET /api/attendance - Listar registros
-router.get('/attendance', async (req, res) => {
+router.get('/attendance', protect, async (req, res) => {
   try {
     const records = await Attendance.find().populate('user', 'name identifier area position employeeType').sort({ timestamp: -1 });
     res.json(records);

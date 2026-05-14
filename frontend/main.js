@@ -10,6 +10,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const menuToggle = document.getElementById('menu-toggle');
   const sidebar = document.querySelector('.sidebar');
+  const btnLoginTrigger = document.getElementById('btn-login-trigger');
+  const btnLogout = document.getElementById('btn-logout');
+  const loginModal = document.getElementById('login-modal');
+  const loginForm = document.getElementById('login-form');
+  const navUsers = document.getElementById('nav-users');
+  const navReports = document.getElementById('nav-reports');
+
+  const checkLogin = () => {
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      navUsers.style.display = 'flex';
+      navReports.style.display = 'flex';
+      btnLoginTrigger.style.display = 'none';
+      btnLogout.style.display = 'flex';
+    } else {
+      navUsers.style.display = 'none';
+      navReports.style.display = 'none';
+      btnLoginTrigger.style.display = 'flex';
+      btnLogout.style.display = 'none';
+      // Force to scanner view
+      const scannerTab = document.querySelector('[data-view="scanner-view"]');
+      if (scannerTab) scannerTab.click();
+    }
+  };
+  
+
+  const getAuthHeaders = (isFormData = false) => {
+    const token = localStorage.getItem('adminToken');
+    const headers = { 'Authorization': `Bearer ${token}` };
+    if (!isFormData) headers['Content-Type'] = 'application/json';
+    return headers;
+  };
+
+  btnLoginTrigger.addEventListener('click', () => loginModal.classList.add('active'));
+  document.getElementById('btn-close-login').addEventListener('click', () => loginModal.classList.remove('active'));
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('adminToken', data.token);
+        loginModal.classList.remove('active');
+        loginForm.reset();
+        checkLogin();
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      alert('Error de conexión');
+    }
+  });
+
+  btnLogout.addEventListener('click', () => {
+    localStorage.removeItem('adminToken');
+    checkLogin();
+  });
 
   if(menuToggle) {
     menuToggle.addEventListener('click', () => {
@@ -58,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     uploadArea.innerHTML = `<i class="fa-solid fa-spinner fa-spin fa-3x"></i><p>Procesando...</p>`;
     const formData = new FormData(); formData.append('file', file);
     try {
-      const res = await fetch(`${API_URL}/users/upload`, { method: 'POST', body: formData });
+      const res = await fetch(`${API_URL}/users/upload`, { method: 'POST', headers: getAuthHeaders(true), body: formData });
       const data = await res.json();
       if (res.ok) { alert(data.message); loadUsers(); } else alert('Error: ' + data.message);
     } catch (err) { alert('Error de conexión'); }
@@ -88,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm(`¿Estás seguro de ${currentStatus ? 'desactivar' : 'activar'} a este empleado?`)) return;
     try {
       const res = await fetch(`${API_URL}/users/${id}/status`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH', headers: getAuthHeaders(),
         body: JSON.stringify({ isActive: !currentStatus })
       });
       if (res.ok) loadUsers();
@@ -116,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.querySelector('#users-table tbody');
     tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
     try {
-      const res = await fetch(`${API_URL}/users`);
+      const res = await fetch(`${API_URL}/users`, { headers: getAuthHeaders() });
       const users = await res.json();
       tbody.innerHTML = '';
       if (users.length === 0) return tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay empleados registrados</td></tr>';
@@ -188,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const res = await fetch(url, {
-        method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        method, headers: getAuthHeaders(), body: JSON.stringify(body)
       });
       if (res.ok) { closeModal(); loadUsers(); }
       else { const data = await res.json(); alert(data.message); }
@@ -199,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.querySelector('#reports-table tbody');
     tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
     try {
-      const res = await fetch(`${API_URL}/attendance`);
+      const res = await fetch(`${API_URL}/attendance`, { headers: getAuthHeaders() });
       const records = await res.json();
       tbody.innerHTML = '';
       if (records.length === 0) return tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay registros</td></tr>';
