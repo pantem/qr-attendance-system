@@ -16,17 +16,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('login-form');
   const navUsers = document.getElementById('nav-users');
   const navReports = document.getElementById('nav-reports');
+  const navAdmins = document.getElementById('nav-admins');
 
   const checkLogin = () => {
     const token = localStorage.getItem('adminToken');
     if (token) {
       navUsers.style.display = 'flex';
       navReports.style.display = 'flex';
+      navAdmins.style.display = 'flex';
       btnLoginTrigger.style.display = 'none';
       btnLogout.style.display = 'flex';
     } else {
       navUsers.style.display = 'none';
       navReports.style.display = 'none';
+      navAdmins.style.display = 'none';
       btnLoginTrigger.style.display = 'flex';
       btnLogout.style.display = 'none';
       // Force to scanner view
@@ -100,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (targetViewId === 'users-view') loadUsers();
       else if (targetViewId === 'reports-view') loadReports();
+      else if (targetViewId === 'admins-view') loadAdmins();
       
       // Close sidebar on mobile
       if (window.innerWidth <= 768) {
@@ -288,5 +292,91 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.appendChild(tr);
       });
     } catch (err) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--danger);">Error</td></tr>'; }
+  }
+
+  // Admins CRUD
+  const adminModal = document.getElementById('admin-modal');
+  const passwordModal = document.getElementById('password-modal');
+  const adminForm = document.getElementById('admin-form');
+  const passwordForm = document.getElementById('password-form');
+  
+  document.getElementById('btn-new-admin').addEventListener('click', () => {
+    adminModal.classList.add('active');
+  });
+  document.getElementById('btn-close-admin').addEventListener('click', () => {
+    adminModal.classList.remove('active'); adminForm.reset();
+  });
+  document.getElementById('btn-close-password').addEventListener('click', () => {
+    passwordModal.classList.remove('active'); passwordForm.reset();
+  });
+
+  window.changeAdminPassword = (id) => {
+    document.getElementById('password-admin-id').value = id;
+    passwordModal.classList.add('active');
+  };
+
+  window.deleteAdmin = async (id) => {
+    if(!confirm('¿Eliminar administrador?')) return;
+    try {
+      const res = await fetch(`${API_URL}/auth/admins/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+      const data = await res.json();
+      if(res.ok) loadAdmins(); else alert(data.message);
+    } catch(e) { alert('Error de conexión'); }
+  };
+
+  adminForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('admin-username').value;
+    const password = document.getElementById('admin-password').value;
+    try {
+      const res = await fetch(`${API_URL}/auth/admins`, {
+        method: 'POST', headers: getAuthHeaders(),
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if(res.ok) {
+        adminModal.classList.remove('active'); adminForm.reset(); loadAdmins();
+      } else alert(data.message);
+    } catch(err) { alert('Error'); }
+  });
+
+  passwordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('password-admin-id').value;
+    const newPassword = document.getElementById('new-password').value;
+    try {
+      const res = await fetch(`${API_URL}/auth/admins/${id}/password`, {
+        method: 'PUT', headers: getAuthHeaders(),
+        body: JSON.stringify({ newPassword })
+      });
+      const data = await res.json();
+      if(res.ok) {
+        passwordModal.classList.remove('active'); passwordForm.reset(); alert('Contraseña actualizada');
+      } else alert(data.message);
+    } catch(err) { alert('Error'); }
+  });
+
+  async function loadAdmins() {
+    const tbody = document.querySelector('#admins-table tbody');
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
+    try {
+      const res = await fetch(`${API_URL}/auth/admins`, { headers: getAuthHeaders() });
+      const admins = await res.json();
+      tbody.innerHTML = '';
+      if(admins.length === 0) return tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No hay administradores</td></tr>';
+      
+      admins.forEach(admin => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${admin.username}</strong></td>
+          <td>${admin._id}</td>
+          <td>
+            <button class="btn-icon" title="Cambiar Contraseña" onclick="changeAdminPassword('${admin._id}')"><i class="fa-solid fa-key"></i></button>
+            <button class="btn-icon delete" title="Eliminar" onclick="deleteAdmin('${admin._id}')"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) { tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--danger);">Error</td></tr>'; }
   }
 });
