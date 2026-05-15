@@ -6,6 +6,13 @@ const qrcode = require('qrcode');
 const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const { protect } = require('../middleware/auth');
+const cloudinary = require('cloudinary').v2;
+
+cloudinary.config({ 
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+  api_key: process.env.CLOUDINARY_API_KEY, 
+  api_secret: process.env.CLOUDINARY_API_SECRET 
+});
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -161,7 +168,14 @@ router.post('/attendance', async (req, res) => {
       type = 'Salida';
     }
 
-    const newAttendance = new Attendance({ user: user._id, type, photo });
+    // Subir a Cloudinary
+    let photoUrl = photo;
+    if (photo.startsWith('data:image')) {
+      const uploadRes = await cloudinary.uploader.upload(photo, { folder: 'qr_attendance' });
+      photoUrl = uploadRes.secure_url;
+    }
+
+    const newAttendance = new Attendance({ user: user._id, type, photo: photoUrl });
     await newAttendance.save();
 
     res.json({ message: `Registro exitoso: ${type}`, attendance: newAttendance, userName: user.name });
