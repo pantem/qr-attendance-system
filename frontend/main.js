@@ -268,6 +268,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('qr-modal').classList.remove('active');
   });
 
+  // Photo Modal
+  document.getElementById('btn-close-photo-modal').addEventListener('click', () => {
+    document.getElementById('photo-modal').classList.remove('active');
+  });
+
+  window.viewPhoto = function(photoUrl, userName) {
+    document.getElementById('photo-modal-name').textContent = userName;
+    document.getElementById('photo-modal-img').src = photoUrl;
+    document.getElementById('photo-modal').classList.add('active');
+  };
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('employee-id').value;
@@ -307,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${record.user?.identifier || '-'}</td>
           <td><span class="badge ${record.type === 'Entrada' ? 'badge-entrada' : 'badge-salida'}">${record.type}</span></td>
           <td>${date.toLocaleString()}</td>
-          <td>${record.photo ? `<img src="${record.photo}" class="photo-img"/>` : '-'}</td>
+          <td>${record.photo ? `<img src="${record.photo}" class="photo-img" style="cursor: pointer; width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onclick="viewPhoto('${record.photo}', '${record.user?.name || 'Desconocido'}')" title="Ver en grande"/>` : '-'}</td>
         `;
         tbody.appendChild(tr);
       });
