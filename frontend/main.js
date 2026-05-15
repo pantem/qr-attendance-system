@@ -142,7 +142,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function resetUploadArea() {
-    uploadArea.innerHTML = `<i class="fa-solid fa-cloud-arrow-up fa-3x"></i><h3>Subir Archivo Excel</h3><p>Soporta columnas: Nombre, Área, Puesto, Tipo</p><input type="file" id="excel-file" accept=".xlsx, .xls" style="display: none;">`;
+    uploadArea.innerHTML = `
+      <i class="fa-solid fa-cloud-arrow-up fa-3x"></i>
+      <h3>Subir Archivo Excel</h3>
+      <p>Soporta columnas: Nombre, Área, Puesto, Tipo</p>
+      <input type="file" id="excel-file" accept=".xlsx, .xls" style="display: none;">
+      <a href="/plantilla_empleados.xlsx" download class="btn btn-secondary" style="margin-top: 1rem;" onclick="event.stopPropagation();">
+        <i class="fa-solid fa-file-excel"></i> Descargar Plantilla
+      </a>
+    `;
     document.getElementById('excel-file').addEventListener('change', e => {
       if (e.target.files.length > 0) handleFileUpload(e.target.files[0]);
     });

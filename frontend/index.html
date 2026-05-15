@@ -78,11 +78,14 @@
         </div>
 
         <div class="card">
-          <div class="upload-area" id="upload-area">
+          <div class="upload-area" id="upload-area" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
             <i class="fa-solid fa-cloud-arrow-up fa-3x"></i>
             <h3>Subir Archivo Excel</h3>
             <p>Soporta columnas: Nombre, Área, Puesto, Tipo</p>
             <input type="file" id="excel-file" accept=".xlsx, .xls" style="display: none;">
+            <a href="/plantilla_empleados.xlsx" download class="btn btn-secondary" style="margin-top: 1rem;" onclick="event.stopPropagation();">
+              <i class="fa-solid fa-file-excel"></i> Descargar Plantilla
+            </a>
           </div>
         </div>
 
