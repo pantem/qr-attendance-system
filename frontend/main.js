@@ -162,6 +162,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('modal-title').textContent = 'Editar Empleado';
     document.getElementById('employee-id').value = user._id;
     document.getElementById('employee-name').value = user.name;
+    const identifierField = document.getElementById('employee-identifier');
+    if(identifierField) {
+      identifierField.value = user.identifier || '';
+      identifierField.readOnly = true;
+    }
     document.getElementById('employee-area').value = user.area || '';
     document.getElementById('employee-position').value = user.position || '';
     document.getElementById('employee-type').value = user.employeeType || 'Base';
@@ -243,7 +248,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('employee-form');
 
   const openModal = () => modal.classList.add('active');
-  const closeModal = () => { modal.classList.remove('active'); form.reset(); document.getElementById('employee-id').value = ''; };
+  const closeModal = () => { 
+    modal.classList.remove('active'); 
+    form.reset(); 
+    document.getElementById('employee-id').value = ''; 
+    const identifierField = document.getElementById('employee-identifier');
+    if(identifierField) identifierField.readOnly = false;
+  };
 
   btnNew.addEventListener('click', () => {
     document.getElementById('modal-title').textContent = 'Nuevo Empleado';
@@ -262,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const id = document.getElementById('employee-id').value;
     const body = {
       name: document.getElementById('employee-name').value,
+      identifier: document.getElementById('employee-identifier')?.value,
       area: document.getElementById('employee-area').value,
       position: document.getElementById('employee-position').value,
       employeeType: document.getElementById('employee-type').value,

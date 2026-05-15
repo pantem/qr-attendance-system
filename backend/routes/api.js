@@ -94,10 +94,17 @@ router.get('/users', protect, async (req, res) => {
 // POST /api/users - Crear usuario manual
 router.post('/users', protect, async (req, res) => {
   try {
-    const { name, area, position, employeeType } = req.body;
+    const { name, identifier: customId, area, position, employeeType } = req.body;
     if (!name) return res.status(400).json({ message: 'El nombre es requerido' });
 
-    const identifier = `USER_${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    let identifier = customId;
+    if (!identifier) {
+      identifier = `USER_${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    } else {
+      const exists = await User.findOne({ identifier });
+      if (exists) return res.status(400).json({ message: 'Ese identificador ya está en uso' });
+    }
+
     const qrDataURL = await qrcode.toDataURL(identifier);
 
     const newUser = new User({
