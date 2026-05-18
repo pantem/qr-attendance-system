@@ -563,6 +563,7 @@ body {
 .camera-wrapper {
   background-color: #030712 !important; /* Dark slate-black cyber color */
   position: relative;
+  will-change: transform;
 }
 
 /* Cyber Scanner Overlay - absolutely positioned above the video stream */
@@ -594,32 +595,35 @@ body {
 /* Moving laser line with horizontal glow/lens flare */
 .scanner-laser {
   position: absolute;
+  top: 0;
   left: 5%;
   width: 90%;
   height: 3px;
   background: linear-gradient(90deg, rgba(59, 130, 246, 0) 0%, rgba(59, 130, 246, 0.8) 15%, rgba(191, 219, 254, 1) 50%, rgba(59, 130, 246, 0.8) 85%, rgba(59, 130, 246, 0) 100%);
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.8), 0 0 25px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.3);
   z-index: 5;
-  animation: laserScan 4.5s ease-in-out infinite;
+  will-change: transform;
+  transform: translateY(30px);
+  animation: laserScan 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes laserScan {
   0% {
-    top: 8%;
+    transform: translateY(30px);
     opacity: 0.2;
   }
   15% {
     opacity: 1;
   }
   50% {
-    top: 92%;
+    transform: translateY(370px);
     opacity: 1;
   }
   85% {
     opacity: 1;
   }
   100% {
-    top: 8%;
+    transform: translateY(30px);
     opacity: 0.2;
   }
 }
