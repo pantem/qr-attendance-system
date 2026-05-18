@@ -495,7 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
     try {
-      const res = await fetch(`${API_URL}/activities/all`, { headers: getAuthHeaders() });
+      const res = await fetch(`${API_URL}/activities/all?t=${Date.now()}`, { headers: getAuthHeaders(), cache: 'no-store' });
       const activities = await res.json();
       tbody.innerHTML = '';
       if (activities.length === 0) {

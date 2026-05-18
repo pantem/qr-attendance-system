@@ -5,10 +5,11 @@ const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'l
   : `http://${window.location.hostname}:5000/api`);
 
 export async function loadActivityOptions() {
+  console.log("loadActivityOptions ejecutado");
   const selector = document.getElementById("activity-selector");
   if (!selector) return;
   try {
-    const res = await fetch(`${API_URL}/activities`);
+    const res = await fetch(`${API_URL}/activities?t=${Date.now()}`, { cache: 'no-store' });
     const activities = await res.json();
     selector.innerHTML = '';
     if (activities.length === 0) {
