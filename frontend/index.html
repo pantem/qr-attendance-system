@@ -63,20 +63,6 @@
 
       <!-- Escáner View -->
       <section id="scanner-view" class="view active-view">
-        <div class="header" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-          <div>
-            <h1>Terminal de Asistencia</h1>
-            <p>Muestra tu código QR a la cámara para registrar tu entrada o salida.</p>
-          </div>
-          <div
-            style="background: var(--bg-card); padding: 0.5rem 1rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 0.5rem; border: 1px solid var(--border-color);">
-            <label style="font-size: 0.875rem; color: var(--text-muted);"><i class="fa-solid fa-clock"></i> Tiempo
-              foto:</label>
-            <input type="number" id="countdown-time" value="3" min="0" max="10"
-              style="width: 50px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 0.25rem; padding: 0.25rem; text-align: center;">
-            <small style="color: var(--text-muted);">seg</small>
-          </div>
-        </div>
 
         <!-- Contenedor del Escáner Autorizado -->
         <div id="authorized-scanner-container">
@@ -95,6 +81,14 @@
           <div class="selected-activity-banner" style="margin-bottom: 1rem;">
             <i class="fa-solid fa-bell-concierge fa-fade"></i> Registrando: <span id="selected-activity-text">Jornada
               Laboral</span>
+            <div
+              style="background: var(--bg-card); padding: 0.5rem 1rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 0.5rem; border: 1px solid var(--border-color);">
+              <label style="font-size: 0.875rem; color: var(--text-muted);"><i class="fa-solid fa-clock"></i> Tiempo
+                foto:</label>
+              <input type="number" id="countdown-time" value="3" min="0" max="10"
+                style="width: 50px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 0.25rem; padding: 0.25rem; text-align: center;">
+              <small style="color: var(--text-muted);">seg</small>
+            </div>
           </div>
 
           <div class="scanner-container">
@@ -191,12 +185,14 @@
 
       <!-- Reports View -->
       <section id="reports-view" class="view">
-        <div class="header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div class="header"
+          style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
           <div>
             <h1>Reporte de Asistencias</h1>
             <p>Historial de entradas y salidas con captura fotográfica.</p>
           </div>
-          <button class="btn btn-success" id="btn-export-excel" style="background-color: #10b981; border-color: #10b981; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600;">
+          <button class="btn btn-success" id="btn-export-excel"
+            style="background-color: #10b981; border-color: #10b981; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600;">
             <i class="fa-solid fa-file-excel fa-lg"></i> Exportar Excel
           </button>
         </div>
