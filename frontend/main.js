@@ -100,34 +100,67 @@ document.addEventListener('DOMContentLoaded', () => {
     pagContainer.appendChild(btnNext);
   }
 
-  const checkTerminalAuthorization = () => {
-    const hasToken = !!localStorage.getItem('terminalToken');
-    const terminalName = localStorage.getItem('terminalName') || '-';
+  const checkTerminalAuthorization = async () => {
+    const token = localStorage.getItem('terminalToken');
     const authContainer = document.getElementById('authorized-scanner-container');
     const unauthContainer = document.getElementById('unauthorized-scanner-container');
     const btnAuthorize = document.getElementById('btn-authorize-device');
     const btnDeauthorize = document.getElementById('btn-deauthorize-device');
     const nameDisplay = document.getElementById('active-terminal-name-display');
     const nameLabel = document.getElementById('current-terminal-label');
-    const token = localStorage.getItem('adminToken');
+    const adminToken = localStorage.getItem('adminToken');
 
-    if (hasToken) {
-      if (authContainer) authContainer.style.display = 'block';
-      if (unauthContainer) unauthContainer.style.display = 'none';
-      if (nameDisplay) nameDisplay.style.display = 'block';
-      if (nameLabel) nameLabel.textContent = terminalName;
-      if (token) {
-        if (btnAuthorize) btnAuthorize.style.display = 'none';
-        if (btnDeauthorize) btnDeauthorize.style.display = 'flex';
-      }
-    } else {
+    if (!token) {
       if (authContainer) authContainer.style.display = 'none';
       if (unauthContainer) unauthContainer.style.display = 'block';
       if (nameDisplay) nameDisplay.style.display = 'none';
       if (nameLabel) nameLabel.textContent = '-';
-      if (token) {
+      if (adminToken) {
         if (btnAuthorize) btnAuthorize.style.display = 'flex';
         if (btnDeauthorize) btnDeauthorize.style.display = 'none';
+      }
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/terminals/validate`, {
+        headers: { 'x-terminal-token': token }
+      });
+      const data = await res.json();
+
+      if (res.ok && data.isValid) {
+        if (authContainer) authContainer.style.display = 'block';
+        if (unauthContainer) unauthContainer.style.display = 'none';
+        if (nameDisplay) nameDisplay.style.display = 'block';
+        if (nameLabel) nameLabel.textContent = data.terminalName || '-';
+        if (adminToken) {
+          if (btnAuthorize) btnAuthorize.style.display = 'none';
+          if (btnDeauthorize) btnDeauthorize.style.display = 'flex';
+        }
+      } else {
+        // Token is invalid or revoked
+        localStorage.removeItem('terminalToken');
+        localStorage.removeItem('terminalName');
+        if (authContainer) authContainer.style.display = 'none';
+        if (unauthContainer) unauthContainer.style.display = 'block';
+        if (nameDisplay) nameDisplay.style.display = 'none';
+        if (nameLabel) nameLabel.textContent = '-';
+        if (adminToken) {
+          if (btnAuthorize) btnAuthorize.style.display = 'flex';
+          if (btnDeauthorize) btnDeauthorize.style.display = 'none';
+        }
+        alert('Este dispositivo ha sido revocado o suspendido por el administrador.');
+        window.location.reload(); // Reload to stop scanner stream and clear active memory
+      }
+    } catch (err) {
+      // Offline fallback: trust local token to support offline/intermittent connections
+      if (authContainer) authContainer.style.display = 'block';
+      if (unauthContainer) unauthContainer.style.display = 'none';
+      if (nameDisplay) nameDisplay.style.display = 'block';
+      if (nameLabel) nameLabel.textContent = localStorage.getItem('terminalName') || '-';
+      if (adminToken) {
+        if (btnAuthorize) btnAuthorize.style.display = 'none';
+        if (btnDeauthorize) btnDeauthorize.style.display = 'flex';
       }
     }
   };

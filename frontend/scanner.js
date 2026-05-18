@@ -177,6 +177,19 @@ export function initScanner() {
           <p>${data.userName}<br><small>${data.attendance.activity}</small></p>
         `;
       } else {
+        if (res.status === 403 && data.message && (data.message.includes('autorizado') || data.message.includes('revocado'))) {
+          localStorage.removeItem('terminalToken');
+          localStorage.removeItem('terminalName');
+          statusPanel.innerHTML = `
+            <i class="fa-solid fa-circle-xmark fa-3x" style="color: var(--danger); margin-bottom: 1rem;"></i>
+            <h3 style="color: var(--danger)">Acceso Revocado</h3>
+            <p>${data.message}</p>
+          `;
+          setTimeout(() => {
+            window.location.reload();
+          }, 3500);
+          return;
+        }
         throw new Error(data.message || 'Error al registrar');
       }
     } catch (err) {

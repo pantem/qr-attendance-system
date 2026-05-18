@@ -304,6 +304,23 @@ router.delete('/activities/:id', protect, async (req, res) => {
   }
 });
 
+// GET /api/terminals/validate - Verificar si el token actual de la terminal es válido y está activo
+router.get('/terminals/validate', async (req, res) => {
+  try {
+    const token = req.headers['x-terminal-token'];
+    if (!token) {
+      return res.status(401).json({ isValid: false, message: 'No se proporcionó token' });
+    }
+    const terminal = await Terminal.findOne({ token, isActive: true });
+    if (!terminal) {
+      return res.status(401).json({ isValid: false, message: 'Terminal no autorizada o inactiva' });
+    }
+    res.json({ isValid: true, terminalName: terminal.name });
+  } catch (error) {
+    res.status(500).json({ isValid: false, error: error.message });
+  }
+});
+
 // --- Terminal endpoints (Solo admin) ---
 
 // GET /api/terminals - Listar todas las terminales
