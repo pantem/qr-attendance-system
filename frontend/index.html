@@ -24,26 +24,31 @@
         </li>
         <li id="nav-reports" data-view="reports-view" style="display: none;"><i class="fa-solid fa-chart-bar"></i>
           Reportes</li>
-        <li id="nav-activities" data-view="activities-view" style="display: none;"><i class="fa-solid fa-list-check"></i>
+        <li id="nav-activities" data-view="activities-view" style="display: none;"><i
+            class="fa-solid fa-list-check"></i>
           Actividades</li>
         <li id="nav-terminals" data-view="terminals-view" style="display: none;"><i class="fa-solid fa-desktop"></i>
           Terminales</li>
         <li id="nav-admins" data-view="admins-view" style="display: none;"><i class="fa-solid fa-user-shield"></i>
           Administradores</li>
       </ul>
-      <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.5rem;">
+      <div
+        style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.5rem;">
         <button id="btn-login-trigger" class="btn btn-secondary" style="width: 100%; justify-content: center;"><i
             class="fa-solid fa-lock"></i> Administrar</button>
         <button id="btn-logout" class="btn btn-secondary"
           style="width: 100%; justify-content: center; display: none; color: var(--danger);"><i
             class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión</button>
-        <button id="btn-authorize-device" class="btn btn-primary" style="width: 100%; justify-content: center; display: none; font-size: 0.875rem;">
+        <button id="btn-authorize-device" class="btn btn-primary"
+          style="width: 100%; justify-content: center; display: none; font-size: 0.875rem;">
           <i class="fa-solid fa-laptop-code"></i> Autorizar Terminal
         </button>
-        <button id="btn-deauthorize-device" class="btn btn-danger" style="width: 100%; justify-content: center; display: none; font-size: 0.875rem;">
+        <button id="btn-deauthorize-device" class="btn btn-danger"
+          style="width: 100%; justify-content: center; display: none; font-size: 0.875rem;">
           <i class="fa-solid fa-circle-minus"></i> Quitar Autorización
         </button>
-        <div id="active-terminal-name-display" style="display: none; font-size: 0.85rem; text-align: center; color: var(--success); font-weight: 600; padding: 0.5rem; background: rgba(16, 185, 129, 0.1); border-radius: 0.375rem; border: 1px solid rgba(16, 185, 129, 0.2); margin-top: 0.5rem;">
+        <div id="active-terminal-name-display"
+          style="display: none; font-size: 0.85rem; text-align: center; color: var(--success); font-weight: 600; padding: 0.5rem; background: rgba(16, 185, 129, 0.1); border-radius: 0.375rem; border: 1px solid rgba(16, 185, 129, 0.2); margin-top: 0.5rem;">
           <i class="fa-solid fa-desktop"></i> Terminal: <span id="current-terminal-label">-</span>
         </div>
       </div>
@@ -78,7 +83,8 @@
           <!-- Selector de Actividad en Botones -->
           <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
             <label style="font-weight: 600; color: var(--text-color); margin-bottom: 0.75rem; display: block;">
-              <i class="fa-solid fa-circle-play" style="color: var(--primary);"></i> Selecciona la actividad a registrar:
+              <i class="fa-solid fa-circle-play" style="color: var(--primary);"></i> Selecciona la actividad a
+              registrar:
             </label>
             <div id="activity-buttons-container" class="activity-buttons-grid">
               <!-- Dinámico -->
@@ -87,7 +93,8 @@
 
           <!-- Indicador de Actividad Seleccionada encima del escáner -->
           <div class="selected-activity-banner" style="margin-bottom: 1rem;">
-            <i class="fa-solid fa-bell-concierge fa-fade"></i> Registrando: <span id="selected-activity-text">Jornada Laboral</span>
+            <i class="fa-solid fa-bell-concierge fa-fade"></i> Registrando: <span id="selected-activity-text">Jornada
+              Laboral</span>
           </div>
 
           <div class="scanner-container">
@@ -112,10 +119,13 @@
         </div>
 
         <!-- Contenedor No Autorizado -->
-        <div id="unauthorized-scanner-container" style="display: none; text-align: center; padding: 4rem 2rem; background: var(--bg-card); border-radius: 0.5rem; border: 1px dashed var(--danger); margin-top: 1.5rem;">
+        <div id="unauthorized-scanner-container"
+          style="display: none; text-align: center; padding: 4rem 2rem; background: var(--bg-card); border-radius: 0.5rem; border: 1px dashed var(--danger); margin-top: 1.5rem;">
           <i class="fa-solid fa-laptop-code fa-4x" style="color: var(--danger); margin-bottom: 1.5rem;"></i>
           <h2 style="color: var(--danger); margin-bottom: 0.5rem;">Terminal No Autorizada</h2>
-          <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 1.5rem;">Este navegador o dispositivo no tiene permiso para registrar asistencias. Por favor, solicita a un administrador que inicie sesión y autorice esta terminal.</p>
+          <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 1.5rem;">Este navegador o dispositivo no
+            tiene permiso para registrar asistencias. Por favor, solicita a un administrador que inicie sesión y
+            autorice esta terminal.</p>
         </div>
       </section>
 
@@ -258,7 +268,7 @@
       <section id="terminals-view" class="view">
         <div class="header">
           <h1>Terminales Autorizadas</h1>
-          <p>Control de dispositivos físicos habilitados para registrar asistencia en el negocio.</p>
+          <p>Control de dispositivos físicos habilitados para registrar asistencias.</p>
         </div>
 
         <div class="card mt-2">
@@ -446,8 +456,10 @@
         <h2 id="photo-modal-name">Fotografía</h2>
         <button class="close-modal" id="btn-close-photo-modal"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div style="background: white; padding: 10px; border-radius: 0.5rem; display: inline-block; margin-bottom: 1rem; width: 100%;">
-        <img id="photo-modal-img" src="" alt="Fotografía" style="width: 100%; max-width: 480px; height: auto; border-radius: 0.5rem;">
+      <div
+        style="background: white; padding: 10px; border-radius: 0.5rem; display: inline-block; margin-bottom: 1rem; width: 100%;">
+        <img id="photo-modal-img" src="" alt="Fotografía"
+          style="width: 100%; max-width: 480px; height: auto; border-radius: 0.5rem;">
       </div>
     </div>
   </div>
