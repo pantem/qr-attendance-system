@@ -4,6 +4,29 @@ const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'l
   ? 'http://localhost:5000/api' 
   : `http://${window.location.hostname}:5000/api`);
 
+export async function loadActivityOptions() {
+  const selector = document.getElementById("activity-selector");
+  if (!selector) return;
+  try {
+    const res = await fetch(`${API_URL}/activities`);
+    const activities = await res.json();
+    selector.innerHTML = '';
+    if (activities.length === 0) {
+      selector.innerHTML = '<option value="Jornada Laboral">Jornada Laboral</option>';
+    } else {
+      activities.forEach(act => {
+        const opt = document.createElement("option");
+        opt.value = act.name;
+        opt.textContent = act.name;
+        selector.appendChild(opt);
+      });
+    }
+  } catch (err) {
+    console.error("Error cargando opciones de actividades:", err);
+    selector.innerHTML = '<option value="Jornada Laboral">Jornada Laboral</option>';
+  }
+}
+
 export function initScanner() {
   const html5QrCode = new Html5Qrcode("reader");
   const canvasElem = document.getElementById("photo-canvas");
@@ -14,28 +37,6 @@ export function initScanner() {
   
   let isProcessing = false;
 
-  const loadActivityOptions = async () => {
-    const selector = document.getElementById("activity-selector");
-    if (!selector) return;
-    try {
-      const res = await fetch(`${API_URL}/activities`);
-      const activities = await res.json();
-      selector.innerHTML = '';
-      if (activities.length === 0) {
-        selector.innerHTML = '<option value="Jornada Laboral">Jornada Laboral</option>';
-      } else {
-        activities.forEach(act => {
-          const opt = document.createElement("option");
-          opt.value = act.name;
-          opt.textContent = act.name;
-          selector.appendChild(opt);
-        });
-      }
-    } catch (err) {
-      console.error("Error cargando opciones de actividades:", err);
-      selector.innerHTML = '<option value="Jornada Laboral">Jornada Laboral</option>';
-    }
-  };
   loadActivityOptions();
 
   const takePhoto = () => {

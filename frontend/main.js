@@ -1,4 +1,4 @@
-import { initScanner } from './scanner.js';
+import { initScanner, loadActivityOptions } from './scanner.js';
 
 const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
   ? 'http://localhost:5000/api' 
@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (targetViewId === 'reports-view') loadReports();
       else if (targetViewId === 'admins-view') loadAdmins();
       else if (targetViewId === 'activities-view') loadActivities();
+      else if (targetViewId === 'scanner-view') loadActivityOptions();
       
       // Close sidebar on mobile
       if (window.innerWidth <= 768) {
@@ -451,6 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (res.ok) {
         loadActivities();
+        loadActivityOptions();
       } else {
         alert(data.message);
       }
@@ -479,6 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (res.ok) {
         closeActivityModal();
         loadActivities();
+        loadActivityOptions();
       } else {
         alert(data.message);
       }
