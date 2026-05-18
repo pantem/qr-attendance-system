@@ -20,6 +20,86 @@ document.addEventListener('DOMContentLoaded', () => {
   const navActivities = document.getElementById('nav-activities');
   const navTerminals = document.getElementById('nav-terminals');
 
+  let loadedAttendanceRecords = [];
+
+  const paginationState = {
+    users: { currentPage: 1, pageSize: 10 },
+    reports: { currentPage: 1, pageSize: 10 },
+    activities: { currentPage: 1, pageSize: 10 },
+    terminals: { currentPage: 1, pageSize: 10 },
+    admins: { currentPage: 1, pageSize: 10 }
+  };
+
+  function renderTableWithPagination(key, data, tbodySelector, paginationContainerId, renderRowFn) {
+    const state = paginationState[key];
+    const totalDocs = data.length;
+    const pageSize = state.pageSize || 10;
+    const totalPages = Math.ceil(totalDocs / pageSize) || 1;
+
+    if (state.currentPage > totalPages) state.currentPage = totalPages;
+    if (state.currentPage < 1) state.currentPage = 1;
+
+    const startIndex = (state.currentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, totalDocs);
+    const pageData = data.slice(startIndex, endIndex);
+
+    const tbody = document.querySelector(tbodySelector);
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (pageData.length === 0) {
+      const colCount = document.querySelectorAll(`${tbodySelector.split(' ')[0]} thead th`).length || 4;
+      tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align: center;">No hay registros disponibles</td></tr>`;
+    } else {
+      pageData.forEach(item => {
+        const row = renderRowFn(item);
+        tbody.appendChild(row);
+      });
+    }
+
+    const pagContainer = document.getElementById(paginationContainerId);
+    if (!pagContainer) return;
+    pagContainer.innerHTML = '';
+
+    if (totalPages <= 1) {
+      pagContainer.className = '';
+      return;
+    }
+
+    pagContainer.className = 'pagination-controls';
+
+    // Botón Anterior
+    const btnPrev = document.createElement('button');
+    btnPrev.className = `btn btn-secondary btn-sm`;
+    btnPrev.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+    btnPrev.disabled = state.currentPage === 1;
+    if (state.currentPage === 1) btnPrev.classList.add('disabled');
+    btnPrev.addEventListener('click', () => {
+      state.currentPage--;
+      renderTableWithPagination(key, data, tbodySelector, paginationContainerId, renderRowFn);
+    });
+
+    // Info
+    const infoSpan = document.createElement('span');
+    infoSpan.className = 'pagination-info';
+    infoSpan.textContent = `Página ${state.currentPage} de ${totalPages} (${totalDocs} registros)`;
+
+    // Botón Siguiente
+    const btnNext = document.createElement('button');
+    btnNext.className = `btn btn-secondary btn-sm`;
+    btnNext.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+    btnNext.disabled = state.currentPage === totalPages;
+    if (state.currentPage === totalPages) btnNext.classList.add('disabled');
+    btnNext.addEventListener('click', () => {
+      state.currentPage++;
+      renderTableWithPagination(key, data, tbodySelector, paginationContainerId, renderRowFn);
+    });
+
+    pagContainer.appendChild(btnPrev);
+    pagContainer.appendChild(infoSpan);
+    pagContainer.appendChild(btnNext);
+  }
+
   const checkTerminalAuthorization = () => {
     const hasToken = !!localStorage.getItem('terminalToken');
     const terminalName = localStorage.getItem('terminalName') || '-';
@@ -306,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tbody.innerHTML = '';
       if (users.length === 0) return tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay empleados registrados</td></tr>';
 
-      users.forEach(user => {
+      renderTableWithPagination('users', users, '#users-table tbody', 'users-pagination', user => {
         const tr = document.createElement('tr');
         if (!user.isActive) tr.classList.add('user-inactive');
         
@@ -331,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
           </td>
         `;
-        tbody.appendChild(tr);
+        return tr;
       });
     } catch (err) { tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger);">Error al cargar</td></tr>'; }
   }
@@ -406,7 +486,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const records = await res.json();
       tbody.innerHTML = '';
       if (records.length === 0) return tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay registros</td></tr>';
-      records.forEach(record => {
+      
+      loadedAttendanceRecords = records;
+
+      renderTableWithPagination('reports', records, '#reports-table tbody', 'reports-pagination', record => {
         const date = new Date(record.timestamp);
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -418,9 +501,38 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${date.toLocaleString()}</td>
           <td>${record.photo ? `<img src="${record.photo}" class="photo-img" style="cursor: pointer; width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onclick="viewPhoto('${record.photo}', '${record.user?.name || 'Desconocido'}')" title="Ver en grande"/>` : '-'}</td>
         `;
-        tbody.appendChild(tr);
+        return tr;
       });
     } catch (err) { tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--danger);">Error</td></tr>'; }
+  }
+
+  const btnExportExcel = document.getElementById('btn-export-excel');
+  if (btnExportExcel) {
+    btnExportExcel.addEventListener('click', () => {
+      if (loadedAttendanceRecords.length === 0) {
+        alert('No hay información cargada para exportar en este momento.');
+        return;
+      }
+
+      const dataToExport = loadedAttendanceRecords.map(record => ({
+        'Empleado': record.user?.name || 'Desconocido',
+        'Identificador': record.user?.identifier || '-',
+        'Área': record.user?.area || '-',
+        'Puesto': record.user?.position || '-',
+        'Tipo de Registro': record.type,
+        'Actividad': record.activity || 'Jornada Laboral',
+        'Terminal': record.terminalName || 'Web App / Desconocido',
+        'Fecha y Hora': new Date(record.timestamp).toLocaleString(),
+        'Fotografía URL': record.photo || 'Sin fotografía'
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Asistencias");
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(workbook, `Reporte_Asistencias_${dateStr}.xlsx`);
+    });
   }
 
   // Admins CRUD
@@ -494,7 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tbody.innerHTML = '';
       if(admins.length === 0) return tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No hay administradores</td></tr>';
       
-      admins.forEach(admin => {
+      renderTableWithPagination('admins', admins, '#admins-table tbody', 'admins-pagination', admin => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><strong>${admin.username}</strong></td>
@@ -504,7 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="btn-icon delete" title="Eliminar" onclick="deleteAdmin('${admin._id}')"><i class="fa-solid fa-trash"></i></button>
           </td>
         `;
-        tbody.appendChild(tr);
+        return tr;
       });
     } catch (err) { tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--danger);">Error</td></tr>'; }
   }
@@ -594,7 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay actividades registradas</td></tr>';
       }
 
-      activities.forEach(act => {
+      renderTableWithPagination('activities', activities, '#activities-table tbody', 'activities-pagination', act => {
         const tr = document.createElement('tr');
         if (!act.isActive) tr.classList.add('user-inactive');
 
@@ -615,14 +727,13 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
           </td>
         `;
-        tbody.appendChild(tr);
+        return tr;
       });
     } catch (err) {
       tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Error al cargar actividades</td></tr>';
     }
   }
 
-  // --- Terminales CRUD ---
   async function loadTerminals() {
     const tbody = document.querySelector('#terminals-table tbody');
     if (!tbody) return;
@@ -636,12 +747,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      terminals.forEach(term => {
+      renderTableWithPagination('terminals', terminals, '#terminals-table tbody', 'terminals-pagination', term => {
         const date = new Date(term.createdAt);
         const lastActiveDate = term.lastActive ? new Date(term.lastActive).toLocaleString() : 'Nunca';
         const tr = document.createElement('tr');
         
-        // Enmascarar token por seguridad
         const maskedToken = term.token.slice(0, 4) + '...' + term.token.slice(-4);
 
         tr.innerHTML = `
@@ -663,7 +773,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
           </td>
         `;
-        tbody.appendChild(tr);
+        return tr;
       });
     } catch (err) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger);">Error al cargar terminales</td></tr>';

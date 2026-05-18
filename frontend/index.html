@@ -175,14 +175,20 @@
               </tbody>
             </table>
           </div>
+          <div id="users-pagination"></div>
         </div>
       </section>
 
       <!-- Reports View -->
       <section id="reports-view" class="view">
-        <div class="header">
-          <h1>Reporte de Asistencias</h1>
-          <p>Historial de entradas y salidas con captura fotográfica.</p>
+        <div class="header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h1>Reporte de Asistencias</h1>
+            <p>Historial de entradas y salidas con captura fotográfica.</p>
+          </div>
+          <button class="btn btn-success" id="btn-export-excel" style="background-color: #10b981; border-color: #10b981; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600;">
+            <i class="fa-solid fa-file-excel fa-lg"></i> Exportar Excel
+          </button>
         </div>
 
         <div class="card">
@@ -204,6 +210,7 @@
               </tbody>
             </table>
           </div>
+          <div id="reports-pagination"></div>
         </div>
       </section>
       <!-- Admins View -->
@@ -232,6 +239,7 @@
               </tbody>
             </table>
           </div>
+          <div id="admins-pagination"></div>
         </div>
       </section>
       <!-- Activities View -->
@@ -261,6 +269,7 @@
               </tbody>
             </table>
           </div>
+          <div id="activities-pagination"></div>
         </div>
       </section>
 
@@ -292,6 +301,7 @@
               </tbody>
             </table>
           </div>
+          <div id="terminals-pagination"></div>
         </div>
       </section>
     </main>
@@ -464,6 +474,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script type="module" src="./main.js"></script>
 </body>
 
