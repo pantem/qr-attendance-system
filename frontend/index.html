@@ -70,12 +70,19 @@
 
         <!-- Contenedor del Escáner Autorizado -->
         <div id="authorized-scanner-container">
-          <!-- Selector de Actividad -->
-          <div class="card" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-            <label for="activity-selector" style="font-weight: 600; color: var(--text-color); margin: 0;"><i class="fa-solid fa-circle-play"></i> Actividad a registrar:</label>
-            <select id="activity-selector" style="flex: 1; min-width: 200px; padding: 0.5rem; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 1rem;">
+          <!-- Selector de Actividad en Botones -->
+          <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+            <label style="font-weight: 600; color: var(--text-color); margin-bottom: 0.75rem; display: block;">
+              <i class="fa-solid fa-circle-play" style="color: var(--primary);"></i> Selecciona la actividad a registrar:
+            </label>
+            <div id="activity-buttons-container" class="activity-buttons-grid">
               <!-- Dinámico -->
-            </select>
+            </div>
+          </div>
+
+          <!-- Indicador de Actividad Seleccionada encima del escáner -->
+          <div class="selected-activity-banner" style="margin-bottom: 1rem;">
+            <i class="fa-solid fa-bell-concierge fa-fade"></i> Registrando: <span id="selected-activity-text">Jornada Laboral</span>
           </div>
 
           <div class="scanner-container">

@@ -159,9 +159,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   navLinks.forEach(link => {
     link.addEventListener('click', () => {
+      const targetViewId = link.getAttribute('data-view');
+      const activeView = document.querySelector('.view.active-view');
+      if (activeView && activeView.id === targetViewId) {
+        if (window.innerWidth <= 768) {
+          sidebar.classList.remove('open');
+        }
+        return;
+      }
+
       navLinks.forEach(l => l.classList.remove('active'));
       link.classList.add('active');
-      const targetViewId = link.getAttribute('data-view');
       views.forEach(view => {
         view.classList.remove('active-view');
         if (view.id === targetViewId) view.classList.add('active-view');

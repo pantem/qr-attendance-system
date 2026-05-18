@@ -4,27 +4,81 @@ const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'l
   ? 'http://localhost:5000/api' 
   : `http://${window.location.hostname}:5000/api`);
 
+// Variable global al archivo para trackear la actividad seleccionada
+let currentSelectedActivity = "Jornada Laboral";
+
 export async function loadActivityOptions() {
   console.log("loadActivityOptions ejecutado");
-  const selector = document.getElementById("activity-selector");
-  if (!selector) return;
+  const container = document.getElementById("activity-buttons-container");
+  const bannerText = document.getElementById("selected-activity-text");
+  if (!container) return;
+
+  const updateSelectedActivity = (name) => {
+    currentSelectedActivity = name;
+    if (bannerText) bannerText.textContent = name;
+    
+    // Actualizar clases de los botones
+    const buttons = container.querySelectorAll(".activity-btn");
+    buttons.forEach(btn => {
+      if (btn.dataset.activity === name) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
+    });
+  };
+
   try {
     const res = await fetch(`${API_URL}/activities?t=${Date.now()}`, { cache: 'no-store' });
     const activities = await res.json();
-    selector.innerHTML = '';
-    if (activities.length === 0) {
-      selector.innerHTML = '<option value="Jornada Laboral">Jornada Laboral</option>';
-    } else {
-      activities.forEach(act => {
-        const opt = document.createElement("option");
-        opt.value = act.name;
-        opt.textContent = act.name;
-        selector.appendChild(opt);
+    container.innerHTML = '';
+    
+    let list = activities;
+    if (list.length === 0) {
+      list = [{ name: "Jornada Laboral" }];
+    }
+
+    list.forEach(act => {
+      const btn = document.createElement("button");
+      btn.className = "activity-btn";
+      btn.dataset.activity = act.name;
+      
+      // Asignar un icono decorativo elegante según el nombre de la actividad
+      let icon = "fa-briefcase";
+      const nameLower = act.name.toLowerCase();
+      if (nameLower.includes("comida") || nameLower.includes("almuerzo")) icon = "fa-utensils";
+      else if (nameLower.includes("campo") || nameLower.includes("salida")) icon = "fa-person-walking-luggage";
+      else if (nameLower.includes("capacita") || nameLower.includes("curso")) icon = "fa-graduation-cap";
+      else if (nameLower.includes("reunion") || nameLower.includes("junta")) icon = "fa-users";
+      else if (nameLower.includes("medico") || nameLower.includes("salud")) icon = "fa-heart-pulse";
+      
+      btn.innerHTML = `<i class="fa-solid ${icon}"></i> ${act.name}`;
+      
+      btn.addEventListener("click", () => {
+        updateSelectedActivity(act.name);
       });
+      
+      container.appendChild(btn);
+    });
+
+    // Mantener la selección previa si sigue en la lista, o usar la primera
+    const exists = list.some(act => act.name === currentSelectedActivity);
+    if (exists) {
+      updateSelectedActivity(currentSelectedActivity);
+    } else {
+      updateSelectedActivity(list[0].name);
     }
   } catch (err) {
     console.error("Error cargando opciones de actividades:", err);
-    selector.innerHTML = '<option value="Jornada Laboral">Jornada Laboral</option>';
+    container.innerHTML = '';
+    
+    const btn = document.createElement("button");
+    btn.className = "activity-btn active";
+    btn.dataset.activity = "Jornada Laboral";
+    btn.innerHTML = `<i class="fa-solid fa-briefcase"></i> Jornada Laboral`;
+    container.appendChild(btn);
+    
+    updateSelectedActivity("Jornada Laboral");
   }
 }
 
@@ -96,8 +150,7 @@ export function initScanner() {
     const photoBase64 = takePhoto();
 
     // Obtener actividad seleccionada
-    const activitySelector = document.getElementById("activity-selector");
-    const selectedActivity = activitySelector ? activitySelector.value : "Jornada Laboral";
+    const selectedActivity = currentSelectedActivity;
 
     // Enviar a la API
     try {

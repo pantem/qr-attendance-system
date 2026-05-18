@@ -8,7 +8,7 @@ const attendanceSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['Entrada', 'Salida'],
+    enum: ['Entrada', 'Salida', 'Inicio', 'Fin'],
     required: true,
   },
   photo: {
