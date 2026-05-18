@@ -14,9 +14,12 @@
 <body>
   <div class="app-container">
     <nav class="sidebar">
-      <div class="logo">
-        <i class="fa-solid fa-qrcode fa-2x"></i>
-        <h2>Checador QR</h2>
+      <div class="logo" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <i class="fa-solid fa-qrcode fa-2x"></i>
+          <h2>Checador QR</h2>
+        </div>
+        <button id="menu-close" class="btn-icon mobile-menu-close" style="margin-right: 0;"><i class="fa-solid fa-xmark fa-xl"></i></button>
       </div>
       <ul class="nav-links">
         <li class="active" data-view="scanner-view"><i class="fa-solid fa-camera"></i> Escáner</li>

@@ -48,6 +48,10 @@ body {
   padding-left: 1rem;
 }
 
+.mobile-menu-close {
+  display: none !important;
+}
+
 .logo h2 {
   font-size: 1.25rem;
   font-weight: 700;
@@ -400,6 +404,17 @@ body {
   
   .sidebar.open {
     left: 0;
+  }
+
+  .mobile-menu-close {
+    display: block !important;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  
+  .mobile-menu-close:hover {
+    color: var(--danger) !important;
   }
   
   .mobile-header {
