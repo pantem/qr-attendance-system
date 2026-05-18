@@ -85,7 +85,7 @@ body {
 
 .content {
   flex: 1;
-  padding: 2rem 3rem;
+  padding: 1.5rem 2rem;
   overflow-y: auto;
 }
 
@@ -196,7 +196,9 @@ body {
   overflow: hidden;
   position: relative;
   border: 1px solid var(--border-color);
-  min-height: 400px;
+  height: 320px;
+  min-height: 320px;
+  max-height: 320px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -603,27 +605,27 @@ body {
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.8), 0 0 25px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.3);
   z-index: 5;
   will-change: transform;
-  transform: translateY(30px);
+  transform: translateY(20px);
   animation: laserScan 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes laserScan {
   0% {
-    transform: translateY(30px);
+    transform: translateY(20px);
     opacity: 0.2;
   }
   15% {
     opacity: 1;
   }
   50% {
-    transform: translateY(370px);
+    transform: translateY(295px);
     opacity: 1;
   }
   85% {
     opacity: 1;
   }
   100% {
-    transform: translateY(30px);
+    transform: translateY(20px);
     opacity: 0.2;
   }
 }
@@ -640,29 +642,29 @@ body {
 }
 
 .scanner-corner.top-left {
-  top: 1.5rem;
-  left: 1.5rem;
+  top: 1rem;
+  left: 1rem;
   border-top-color: var(--primary);
   border-left-color: var(--primary);
 }
 
 .scanner-corner.top-right {
-  top: 1.5rem;
-  right: 1.5rem;
+  top: 1rem;
+  right: 1rem;
   border-top-color: var(--primary);
   border-right-color: var(--primary);
 }
 
 .scanner-corner.bottom-left {
-  bottom: 1.5rem;
-  left: 1.5rem;
+  bottom: 1rem;
+  left: 1rem;
   border-bottom-color: var(--primary);
   border-left-color: var(--primary);
 }
 
 .scanner-corner.bottom-right {
-  bottom: 1.5rem;
-  right: 1.5rem;
+  bottom: 1rem;
+  right: 1rem;
   border-bottom-color: var(--primary);
   border-right-color: var(--primary);
 }
