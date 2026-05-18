@@ -10,6 +10,7 @@
   --success: #10b981;
   --danger: #ef4444;
   --border-color: #334155;
+  --camera-height: clamp(300px, 42vh, 480px);
 }
 
 * {
@@ -200,9 +201,9 @@ body {
   overflow: hidden;
   position: relative;
   border: 1px solid var(--border-color);
-  height: 320px;
-  min-height: 320px;
-  max-height: 320px;
+  height: var(--camera-height);
+  min-height: var(--camera-height);
+  max-height: var(--camera-height);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -388,6 +389,10 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  :root {
+    --camera-height: 280px;
+  }
+
   .app-container {
     flex-direction: column;
   }
@@ -435,9 +440,7 @@ body {
     gap: 1rem;
   }
   
-  .camera-wrapper {
-    min-height: 300px;
-  }
+
   
   .status-panel {
     padding: 1.5rem 1rem;
@@ -633,7 +636,7 @@ body {
     opacity: 1;
   }
   50% {
-    transform: translateY(295px);
+    transform: translateY(calc(var(--camera-height) - 25px));
     opacity: 1;
   }
   85% {
