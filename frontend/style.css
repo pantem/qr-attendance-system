@@ -666,3 +666,19 @@ body {
   border-bottom-color: var(--primary);
   border-right-color: var(--primary);
 }
+
+/* Side-by-Side Activity Selector Grid */
+.activity-selector-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  align-items: stretch;
+}
+
+@media (max-width: 768px) {
+  .activity-selector-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
