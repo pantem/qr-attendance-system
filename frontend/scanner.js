@@ -200,8 +200,8 @@ export function initScanner() {
     }, 4000);
   };
 
-  // Configuración del escáner
-  const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+  // Configuración del escáner - sin qrbox para eliminar el cuadro blanco pequeño y escanear todo el cuadro
+  const config = { fps: 10 };
   
   html5QrCode.start({ facingMode: "user" }, config, onScanSuccess)
     .catch(err => {

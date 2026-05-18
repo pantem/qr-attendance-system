@@ -204,6 +204,13 @@ body {
 
 #reader {
   width: 100%;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#reader * {
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .status-panel {
