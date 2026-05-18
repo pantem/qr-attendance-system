@@ -14,6 +14,30 @@ export function initScanner() {
   
   let isProcessing = false;
 
+  const loadActivityOptions = async () => {
+    const selector = document.getElementById("activity-selector");
+    if (!selector) return;
+    try {
+      const res = await fetch(`${API_URL}/activities`);
+      const activities = await res.json();
+      selector.innerHTML = '';
+      if (activities.length === 0) {
+        selector.innerHTML = '<option value="Jornada Laboral">Jornada Laboral</option>';
+      } else {
+        activities.forEach(act => {
+          const opt = document.createElement("option");
+          opt.value = act.name;
+          opt.textContent = act.name;
+          selector.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      console.error("Error cargando opciones de actividades:", err);
+      selector.innerHTML = '<option value="Jornada Laboral">Jornada Laboral</option>';
+    }
+  };
+  loadActivityOptions();
+
   const takePhoto = () => {
     const scannerVideo = document.querySelector('#reader video');
     if (!scannerVideo) return '';
@@ -69,6 +93,10 @@ export function initScanner() {
     // Tomar fotografía utilizando el frame actual del video del escáner
     const photoBase64 = takePhoto();
 
+    // Obtener actividad seleccionada
+    const activitySelector = document.getElementById("activity-selector");
+    const selectedActivity = activitySelector ? activitySelector.value : "Jornada Laboral";
+
     // Enviar a la API
     try {
       const res = await fetch(`${API_URL}/attendance`, {
@@ -76,7 +104,8 @@ export function initScanner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           identifier: decodedText,
-          photo: photoBase64
+          photo: photoBase64,
+          activity: selectedActivity
         })
       });
 
@@ -87,7 +116,7 @@ export function initScanner() {
         statusPanel.innerHTML = `
           <i class="fa-solid fa-circle-check fa-3x" style="margin-bottom: 1rem;"></i>
           <h3>¡${data.attendance.type} Registrada!</h3>
-          <p>${data.userName}</p>
+          <p>${data.userName}<br><small>${data.attendance.activity}</small></p>
         `;
       } else {
         throw new Error(data.message || 'Error al registrar');

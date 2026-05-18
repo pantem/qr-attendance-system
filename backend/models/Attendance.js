@@ -19,6 +19,11 @@ const attendanceSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  activity: {
+    type: String,
+    default: 'Jornada Laboral',
+    required: true
+  }
 });
 
 module.exports = mongoose.model('Attendance', attendanceSchema);

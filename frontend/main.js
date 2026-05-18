@@ -17,18 +17,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const navUsers = document.getElementById('nav-users');
   const navReports = document.getElementById('nav-reports');
   const navAdmins = document.getElementById('nav-admins');
+  const navActivities = document.getElementById('nav-activities');
 
   const checkLogin = () => {
     const token = localStorage.getItem('adminToken');
     if (token) {
       navUsers.style.display = 'flex';
       navReports.style.display = 'flex';
+      navActivities.style.display = 'flex';
       navAdmins.style.display = 'flex';
       btnLoginTrigger.style.display = 'none';
       btnLogout.style.display = 'flex';
     } else {
       navUsers.style.display = 'none';
       navReports.style.display = 'none';
+      navActivities.style.display = 'none';
       navAdmins.style.display = 'none';
       btnLoginTrigger.style.display = 'flex';
       btnLogout.style.display = 'none';
@@ -104,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (targetViewId === 'users-view') loadUsers();
       else if (targetViewId === 'reports-view') loadReports();
       else if (targetViewId === 'admins-view') loadAdmins();
+      else if (targetViewId === 'activities-view') loadActivities();
       
       // Close sidebar on mobile
       if (window.innerWidth <= 768) {
@@ -304,12 +308,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadReports() {
     const tbody = document.querySelector('#reports-table tbody');
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
     try {
       const res = await fetch(`${API_URL}/attendance`, { headers: getAuthHeaders() });
       const records = await res.json();
       tbody.innerHTML = '';
-      if (records.length === 0) return tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay registros</td></tr>';
+      if (records.length === 0) return tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay registros</td></tr>';
       records.forEach(record => {
         const date = new Date(record.timestamp);
         const tr = document.createElement('tr');
@@ -317,12 +321,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <td><strong>${record.user?.name || 'Desconocido'}</strong><br><small style="color: var(--text-muted)">${record.user?.area || '-'} / ${record.user?.position || '-'}</small></td>
           <td>${record.user?.identifier || '-'}</td>
           <td><span class="badge ${record.type === 'Entrada' ? 'badge-entrada' : 'badge-salida'}">${record.type}</span></td>
+          <td><span class="badge badge-neutral">${record.activity || 'Jornada Laboral'}</span></td>
           <td>${date.toLocaleString()}</td>
           <td>${record.photo ? `<img src="${record.photo}" class="photo-img" style="cursor: pointer; width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onclick="viewPhoto('${record.photo}', '${record.user?.name || 'Desconocido'}')" title="Ver en grande"/>` : '-'}</td>
         `;
         tbody.appendChild(tr);
       });
-    } catch (err) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--danger);">Error</td></tr>'; }
+    } catch (err) { tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger);">Error</td></tr>'; }
   }
 
   // Admins CRUD
@@ -409,5 +414,116 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.appendChild(tr);
       });
     } catch (err) { tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--danger);">Error</td></tr>'; }
+  }
+
+  // Activities CRUD
+  const activityModal = document.getElementById('activity-modal');
+  const activityForm = document.getElementById('activity-form');
+  const btnNewActivity = document.getElementById('btn-new-activity');
+  const btnCloseActivity = document.getElementById('btn-close-activity');
+
+  const openActivityModal = () => activityModal.classList.add('active');
+  const closeActivityModal = () => {
+    activityModal.classList.remove('active');
+    activityForm.reset();
+    document.getElementById('activity-id').value = '';
+    document.getElementById('activity-modal-title').textContent = 'Nueva Actividad';
+  };
+
+  if (btnNewActivity) btnNewActivity.addEventListener('click', openActivityModal);
+  if (btnCloseActivity) btnCloseActivity.addEventListener('click', closeActivityModal);
+
+  window.editActivity = (id, name, isActive) => {
+    document.getElementById('activity-modal-title').textContent = 'Editar Actividad';
+    document.getElementById('activity-id').value = id;
+    document.getElementById('activity-name').value = name;
+    document.getElementById('activity-status').value = isActive.toString();
+    openActivityModal();
+  };
+
+  window.deleteActivity = async (id) => {
+    if (!confirm('¿Seguro que deseas eliminar esta actividad?')) return;
+    try {
+      const res = await fetch(`${API_URL}/activities/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      const data = await res.json();
+      if (res.ok) {
+        loadActivities();
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      alert('Error de conexión');
+    }
+  };
+
+  activityForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('activity-id').value;
+    const name = document.getElementById('activity-name').value;
+    const isActive = document.getElementById('activity-status').value === 'true';
+
+    const body = { name, isActive };
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `${API_URL}/activities/${id}` : `${API_URL}/activities`;
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: getAuthHeaders(),
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        closeActivityModal();
+        loadActivities();
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      alert('Error de conexión');
+    }
+  });
+
+  async function loadActivities() {
+    const tbody = document.querySelector('#activities-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
+    try {
+      const res = await fetch(`${API_URL}/activities/all`, { headers: getAuthHeaders() });
+      const activities = await res.json();
+      tbody.innerHTML = '';
+      if (activities.length === 0) {
+        return tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay actividades registradas</td></tr>';
+      }
+
+      activities.forEach(act => {
+        const tr = document.createElement('tr');
+        if (!act.isActive) tr.classList.add('user-inactive');
+
+        tr.innerHTML = `
+          <td><strong>${act.name}</strong></td>
+          <td>
+            <span class="badge ${act.isActive ? 'badge-entrada' : 'badge-salida'}">
+              ${act.isActive ? 'Activa' : 'Inactiva'}
+            </span>
+          </td>
+          <td><small style="color: var(--text-muted)">${act._id}</small></td>
+          <td>
+            <button class="btn-icon" title="Editar" onclick="editActivity('${act._id}', '${act.name}', ${act.isActive})">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button class="btn-icon delete" title="Eliminar" onclick="deleteActivity('${act._id}')">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Error al cargar actividades</td></tr>';
+    }
   }
 });

@@ -5,6 +5,7 @@ const xlsx = require('xlsx');
 const qrcode = require('qrcode');
 const User = require('../models/User');
 const Attendance = require('../models/Attendance');
+const Activity = require('../models/Activity');
 const { protect } = require('../middleware/auth');
 const cloudinary = require('cloudinary').v2;
 
@@ -13,6 +14,20 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY, 
   api_secret: process.env.CLOUDINARY_API_SECRET 
 });
+
+// Sembrar actividad por defecto si no existe ninguna
+const seedActivities = async () => {
+  try {
+    const count = await Activity.countDocuments();
+    if (count === 0) {
+      await Activity.create({ name: 'Jornada Laboral' });
+      console.log('Actividad por defecto sembrada (Jornada Laboral)');
+    }
+  } catch (error) {
+    console.error('Error sembrando actividades:', error);
+  }
+};
+seedActivities();
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -155,14 +170,16 @@ router.patch('/users/:id/status', protect, async (req, res) => {
 // POST /api/attendance - Registrar asistencia
 router.post('/attendance', async (req, res) => {
   try {
-    const { identifier, photo } = req.body;
+    const { identifier, photo, activity } = req.body;
     if (!identifier || !photo) return res.status(400).json({ message: 'Faltan datos' });
+
+    const selectedActivity = activity || 'Jornada Laboral';
 
     const user = await User.findOne({ identifier });
     if (!user) return res.status(404).json({ message: 'Código no reconocido' });
     if (!user.isActive) return res.status(403).json({ message: 'El empleado está inactivo' });
 
-    const lastAttendance = await Attendance.findOne({ user: user._id }).sort({ timestamp: -1 });
+    const lastAttendance = await Attendance.findOne({ user: user._id, activity: selectedActivity }).sort({ timestamp: -1 });
     let type = 'Entrada';
     if (lastAttendance && lastAttendance.type === 'Entrada') {
       type = 'Salida';
@@ -175,10 +192,10 @@ router.post('/attendance', async (req, res) => {
       photoUrl = uploadRes.secure_url;
     }
 
-    const newAttendance = new Attendance({ user: user._id, type, photo: photoUrl });
+    const newAttendance = new Attendance({ user: user._id, type, photo: photoUrl, activity: selectedActivity });
     await newAttendance.save();
 
-    res.json({ message: `Registro exitoso: ${type}`, attendance: newAttendance, userName: user.name });
+    res.json({ message: `Registro exitoso: ${type} - ${selectedActivity}`, attendance: newAttendance, userName: user.name });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al registrar asistencia', error: error.message });
@@ -192,6 +209,69 @@ router.get('/attendance', protect, async (req, res) => {
     res.json(records);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener registros', error: error.message });
+  }
+});
+
+// --- RUTAS DE ACTIVIDADES ---
+
+// GET /api/activities - Listar actividades (Público para el escáner)
+router.get('/activities', async (req, res) => {
+  try {
+    const activities = await Activity.find({ isActive: true }).sort({ name: 1 });
+    res.json(activities);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener actividades', error: error.message });
+  }
+});
+
+// GET /api/activities/all - Listar todas las actividades (Solo admin)
+router.get('/activities/all', protect, async (req, res) => {
+  try {
+    const activities = await Activity.find().sort({ name: 1 });
+    res.json(activities);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener actividades', error: error.message });
+  }
+});
+
+// POST /api/activities - Crear actividad (Solo admin)
+router.post('/activities', protect, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ message: 'El nombre es requerido' });
+
+    const exists = await Activity.findOne({ name });
+    if (exists) return res.status(400).json({ message: 'La actividad ya existe' });
+
+    const newActivity = new Activity({ name });
+    await newActivity.save();
+
+    res.json({ message: 'Actividad creada con éxito', activity: newActivity });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al crear actividad', error: error.message });
+  }
+});
+
+// PUT /api/activities/:id - Editar actividad (Solo admin)
+router.put('/activities/:id', protect, async (req, res) => {
+  try {
+    const { name, isActive } = req.body;
+    const activity = await Activity.findByIdAndUpdate(req.params.id, { name, isActive }, { new: true });
+    if (!activity) return res.status(404).json({ message: 'Actividad no encontrada' });
+    res.json({ message: 'Actividad actualizada', activity });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al actualizar', error: error.message });
+  }
+});
+
+// DELETE /api/activities/:id - Eliminar actividad (Solo admin)
+router.delete('/activities/:id', protect, async (req, res) => {
+  try {
+    const activity = await Activity.findByIdAndDelete(req.params.id);
+    if (!activity) return res.status(404).json({ message: 'Actividad no encontrada' });
+    res.json({ message: 'Actividad eliminada con éxito' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al eliminar', error: error.message });
   }
 });
 
