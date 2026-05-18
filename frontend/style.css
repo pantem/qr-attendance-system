@@ -10,7 +10,7 @@
   --success: #10b981;
   --danger: #ef4444;
   --border-color: #334155;
-  --camera-height: clamp(320px, 50vh, 560px);
+  --camera-height: clamp(320px, calc(100vh - 280px), 800px);
 }
 
 * {
