@@ -26,6 +26,8 @@
           Reportes</li>
         <li id="nav-activities" data-view="activities-view" style="display: none;"><i class="fa-solid fa-list-check"></i>
           Actividades</li>
+        <li id="nav-terminals" data-view="terminals-view" style="display: none;"><i class="fa-solid fa-desktop"></i>
+          Terminales</li>
         <li id="nav-admins" data-view="admins-view" style="display: none;"><i class="fa-solid fa-user-shield"></i>
           Administradores</li>
       </ul>
@@ -41,6 +43,9 @@
         <button id="btn-deauthorize-device" class="btn btn-danger" style="width: 100%; justify-content: center; display: none; font-size: 0.875rem;">
           <i class="fa-solid fa-circle-minus"></i> Quitar Autorización
         </button>
+        <div id="active-terminal-name-display" style="display: none; font-size: 0.85rem; text-align: center; color: var(--success); font-weight: 600; padding: 0.5rem; background: rgba(16, 185, 129, 0.1); border-radius: 0.375rem; border: 1px solid rgba(16, 185, 129, 0.2); margin-top: 0.5rem;">
+          <i class="fa-solid fa-desktop"></i> Terminal: <span id="current-terminal-label">-</span>
+        </div>
       </div>
     </nav>
 
@@ -179,6 +184,7 @@
                   <th>ID</th>
                   <th>Tipo</th>
                   <th>Actividad</th>
+                  <th>Terminal</th>
                   <th>Hora</th>
                   <th>Foto</th>
                 </tr>
@@ -237,6 +243,37 @@
                   <th>Nombre de Actividad</th>
                   <th>Estado</th>
                   <th>ID</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Contenido Dinámico -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Terminales View -->
+      <section id="terminals-view" class="view">
+        <div class="header">
+          <h1>Terminales Autorizadas</h1>
+          <p>Control de dispositivos físicos habilitados para registrar asistencia en el negocio.</p>
+        </div>
+
+        <div class="card mt-2">
+          <div class="flex-between">
+            <h2>Lista de Terminales</h2>
+          </div>
+          <div class="table-responsive">
+            <table class="table" id="terminals-table">
+              <thead>
+                <tr>
+                  <th>Nombre de la Terminal</th>
+                  <th>Estado</th>
+                  <th>Último Escaneo</th>
+                  <th>Fecha de Autorización</th>
+                  <th>Token</th>
                   <th>Acciones</th>
                 </tr>
               </thead>

@@ -23,6 +23,10 @@ const attendanceSchema = new mongoose.Schema({
     type: String,
     default: 'Jornada Laboral',
     required: true
+  },
+  terminalName: {
+    type: String,
+    default: 'Web App / Desconocido'
   }
 });
 

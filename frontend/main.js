@@ -18,18 +18,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const navReports = document.getElementById('nav-reports');
   const navAdmins = document.getElementById('nav-admins');
   const navActivities = document.getElementById('nav-activities');
+  const navTerminals = document.getElementById('nav-terminals');
 
   const checkTerminalAuthorization = () => {
     const hasToken = !!localStorage.getItem('terminalToken');
+    const terminalName = localStorage.getItem('terminalName') || '-';
     const authContainer = document.getElementById('authorized-scanner-container');
     const unauthContainer = document.getElementById('unauthorized-scanner-container');
     const btnAuthorize = document.getElementById('btn-authorize-device');
     const btnDeauthorize = document.getElementById('btn-deauthorize-device');
+    const nameDisplay = document.getElementById('active-terminal-name-display');
+    const nameLabel = document.getElementById('current-terminal-label');
     const token = localStorage.getItem('adminToken');
 
     if (hasToken) {
       if (authContainer) authContainer.style.display = 'block';
       if (unauthContainer) unauthContainer.style.display = 'none';
+      if (nameDisplay) nameDisplay.style.display = 'block';
+      if (nameLabel) nameLabel.textContent = terminalName;
       if (token) {
         if (btnAuthorize) btnAuthorize.style.display = 'none';
         if (btnDeauthorize) btnDeauthorize.style.display = 'flex';
@@ -37,6 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       if (authContainer) authContainer.style.display = 'none';
       if (unauthContainer) unauthContainer.style.display = 'block';
+      if (nameDisplay) nameDisplay.style.display = 'none';
+      if (nameLabel) nameLabel.textContent = '-';
       if (token) {
         if (btnAuthorize) btnAuthorize.style.display = 'flex';
         if (btnDeauthorize) btnDeauthorize.style.display = 'none';
@@ -53,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
       navUsers.style.display = 'flex';
       navReports.style.display = 'flex';
       navActivities.style.display = 'flex';
+      navTerminals.style.display = 'flex';
       navAdmins.style.display = 'flex';
       btnLoginTrigger.style.display = 'none';
       btnLogout.style.display = 'flex';
@@ -60,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
       navUsers.style.display = 'none';
       navReports.style.display = 'none';
       navActivities.style.display = 'none';
+      navTerminals.style.display = 'none';
       navAdmins.style.display = 'none';
       btnLoginTrigger.style.display = 'flex';
       btnLogout.style.display = 'none';
@@ -125,11 +135,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnAuthorize) {
     btnAuthorize.addEventListener('click', async () => {
+      const name = prompt('Ingresa un nombre descriptivo para identificar esta terminal (ej. Recepción, Comedor):');
+      if (!name || !name.trim()) return;
+
       try {
-        const res = await fetch(`${API_URL}/terminal/token`, { headers: getAuthHeaders() });
+        const res = await fetch(`${API_URL}/terminals`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ name: name.trim() })
+        });
         const data = await res.json();
         if (res.ok) {
-          localStorage.setItem('terminalToken', data.token);
+          localStorage.setItem('terminalToken', data.terminal.token);
+          localStorage.setItem('terminalName', data.terminal.name);
           alert('¡Este navegador ha sido autorizado como Terminal Checador con éxito!');
           checkTerminalAuthorization();
         } else {
@@ -145,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnDeauthorize.addEventListener('click', () => {
       if (confirm('¿Estás seguro de que deseas quitar la autorización a este dispositivo? Ya no podrá registrar asistencias.')) {
         localStorage.removeItem('terminalToken');
+        localStorage.removeItem('terminalName');
         alert('Autorización removida.');
         checkTerminalAuthorization();
       }
@@ -178,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (targetViewId === 'reports-view') loadReports();
       else if (targetViewId === 'admins-view') loadAdmins();
       else if (targetViewId === 'activities-view') loadActivities();
+      else if (targetViewId === 'terminals-view') loadTerminals();
       else if (targetViewId === 'scanner-view') loadActivityOptions();
       
       // Close sidebar on mobile
@@ -380,12 +400,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadReports() {
     const tbody = document.querySelector('#reports-table tbody');
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
     try {
       const res = await fetch(`${API_URL}/attendance`, { headers: getAuthHeaders() });
       const records = await res.json();
       tbody.innerHTML = '';
-      if (records.length === 0) return tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay registros</td></tr>';
+      if (records.length === 0) return tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay registros</td></tr>';
       records.forEach(record => {
         const date = new Date(record.timestamp);
         const tr = document.createElement('tr');
@@ -394,12 +414,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${record.user?.identifier || '-'}</td>
           <td><span class="badge ${(record.type === 'Entrada' || record.type === 'Inicio') ? 'badge-entrada' : 'badge-salida'}">${record.type}</span></td>
           <td><span class="badge badge-neutral">${record.activity || 'Jornada Laboral'}</span></td>
+          <td><strong>${record.terminalName || 'Web App / Desconocido'}</strong></td>
           <td>${date.toLocaleString()}</td>
           <td>${record.photo ? `<img src="${record.photo}" class="photo-img" style="cursor: pointer; width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onclick="viewPhoto('${record.photo}', '${record.user?.name || 'Desconocido'}')" title="Ver en grande"/>` : '-'}</td>
         `;
         tbody.appendChild(tr);
       });
-    } catch (err) { tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger);">Error</td></tr>'; }
+    } catch (err) { tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--danger);">Error</td></tr>'; }
   }
 
   // Admins CRUD
@@ -600,4 +621,96 @@ document.addEventListener('DOMContentLoaded', () => {
       tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Error al cargar actividades</td></tr>';
     }
   }
+
+  // --- Terminales CRUD ---
+  async function loadTerminals() {
+    const tbody = document.querySelector('#terminals-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
+    try {
+      const res = await fetch(`${API_URL}/terminals`, { headers: getAuthHeaders() });
+      const terminals = await res.json();
+      tbody.innerHTML = '';
+      if (terminals.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay terminales registradas</td></tr>';
+        return;
+      }
+
+      terminals.forEach(term => {
+        const date = new Date(term.createdAt);
+        const lastActiveDate = term.lastActive ? new Date(term.lastActive).toLocaleString() : 'Nunca';
+        const tr = document.createElement('tr');
+        
+        // Enmascarar token por seguridad
+        const maskedToken = term.token.slice(0, 4) + '...' + term.token.slice(-4);
+
+        tr.innerHTML = `
+          <td><strong>${term.name}</strong></td>
+          <td>
+            <span class="badge ${term.isActive ? 'badge-entrada' : 'badge-salida'}">
+              ${term.isActive ? 'Activo' : 'Inactivo'}
+            </span>
+          </td>
+          <td>${lastActiveDate}</td>
+          <td>${date.toLocaleString()}</td>
+          <td><code>${maskedToken}</code></td>
+          <td>
+            <button class="btn-icon" title="${term.isActive ? 'Desactivar' : 'Activar'}" onclick="toggleTerminalStatus('${term._id}', ${term.isActive})">
+              <i class="fa-solid ${term.isActive ? 'fa-ban' : 'fa-circle-check'}"></i>
+            </button>
+            <button class="btn-icon delete" title="Eliminar/Revocar" onclick="deleteTerminal('${term._id}')">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger);">Error al cargar terminales</td></tr>';
+    }
+  }
+
+  window.toggleTerminalStatus = async function(id, currentStatus) {
+    if (!confirm(`¿Estás seguro de ${currentStatus ? 'desactivar' : 'activar'} esta terminal?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/terminals/${id}/status`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ isActive: !currentStatus })
+      });
+      if (res.ok) {
+        loadTerminals();
+        const data = await res.json();
+        // Si desactivamos esta misma terminal, inhabilitamos inmediatamente el escáner local
+        const myToken = localStorage.getItem('terminalToken');
+        if (data.terminal.token === myToken && !data.terminal.isActive) {
+          alert('Esta terminal física ha sido desactivada por el administrador.');
+          localStorage.removeItem('terminalToken');
+          localStorage.removeItem('terminalName');
+          checkTerminalAuthorization();
+        }
+      } else {
+        alert('Error al cambiar estado');
+      }
+    } catch (err) {
+      alert('Error de conexión');
+    }
+  };
+
+  window.deleteTerminal = async function(id) {
+    if (!confirm('¿Estás seguro de revocar y eliminar por completo esta terminal? Todos sus accesos serán denegados de inmediato.')) return;
+    try {
+      const res = await fetch(`${API_URL}/terminals/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      if (res.ok) {
+        loadTerminals();
+      } else {
+        alert('Error al eliminar terminal');
+      }
+    } catch (err) {
+      alert('Error de conexión');
+    }
+  };
 });

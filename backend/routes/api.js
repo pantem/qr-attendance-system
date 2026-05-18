@@ -6,13 +6,15 @@ const qrcode = require('qrcode');
 const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const Activity = require('../models/Activity');
+const Terminal = require('../models/Terminal');
+const crypto = require('crypto');
 const { protect } = require('../middleware/auth');
 const cloudinary = require('cloudinary').v2;
 
-cloudinary.config({ 
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
-  api_key: process.env.CLOUDINARY_API_KEY, 
-  api_secret: process.env.CLOUDINARY_API_SECRET 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 // Sembrar actividad por defecto si no existe ninguna
@@ -21,10 +23,10 @@ const seedActivities = async () => {
     const count = await Activity.countDocuments();
     if (count === 0) {
       await Activity.create({ name: 'Jornada Laboral' });
-      console.log('Actividad por defecto sembrada (Jornada Laboral)');
+      console.log('Actividad por defecto (Jornada Laboral)');
     }
   } catch (error) {
-    console.error('Error sembrando actividades:', error);
+    console.error('Error agregando actividades:', error);
   }
 };
 seedActivities();
@@ -58,7 +60,7 @@ router.post('/users/upload', protect, upload.single('file'), async (req, res) =>
       let identifier = getColValue(row, ['identificador', 'identifier', 'id', 'codigo', 'código']);
       const area = getColValue(row, ['area', 'área', 'departamento', 'dept']);
       const position = getColValue(row, ['puesto', 'cargo', 'position']);
-      
+
       // employeeType can be 'Base', 'Honorarios', or 'Otro' (Default 'Base')
       let rawType = getColValue(row, ['tipo', 'type', 'tipo de empleado', 'tipo empleado']);
       let employeeType = 'Base';
@@ -68,7 +70,7 @@ router.post('/users/upload', protect, upload.single('file'), async (req, res) =>
       }
 
       if (!name) continue;
-      
+
       if (!identifier) {
         identifier = `USER_${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       } else {
@@ -76,7 +78,7 @@ router.post('/users/upload', protect, upload.single('file'), async (req, res) =>
       }
 
       let user = await User.findOne({ identifier });
-      
+
       const userData = {
         name: name.toString(),
         area: area ? area.toString() : 'General',
@@ -144,8 +146,8 @@ router.post('/users', protect, async (req, res) => {
 router.put('/users/:id', protect, async (req, res) => {
   try {
     const { name, area, position, employeeType } = req.body;
-    const user = await User.findByIdAndUpdate(req.params.id, 
-      { name, area, position, employeeType }, 
+    const user = await User.findByIdAndUpdate(req.params.id,
+      { name, area, position, employeeType },
       { new: true }
     );
     if (!user) return res.status(404).json({ message: 'Empleado no encontrado' });
@@ -171,9 +173,13 @@ router.patch('/users/:id/status', protect, async (req, res) => {
 router.post('/attendance', async (req, res) => {
   try {
     const clientToken = req.headers['x-terminal-token'];
-    const serverToken = process.env.TERMINAL_TOKEN || 'default-terminal-token';
-    if (clientToken !== serverToken) {
+    if (!clientToken) {
       return res.status(403).json({ message: 'Este dispositivo no está autorizado para registrar asistencias.' });
+    }
+
+    const terminal = await Terminal.findOne({ token: clientToken, isActive: true });
+    if (!terminal) {
+      return res.status(403).json({ message: 'Este dispositivo no está autorizado o su acceso ha sido revocado.' });
     }
 
     const { identifier, photo, activity } = req.body;
@@ -205,8 +211,18 @@ router.post('/attendance', async (req, res) => {
       photoUrl = uploadRes.secure_url;
     }
 
-    const newAttendance = new Attendance({ user: user._id, type, photo: photoUrl, activity: selectedActivity });
+    const newAttendance = new Attendance({ 
+      user: user._id, 
+      type, 
+      photo: photoUrl, 
+      activity: selectedActivity,
+      terminalName: terminal.name 
+    });
     await newAttendance.save();
+
+    // Actualizar fecha de última actividad de la terminal
+    terminal.lastActive = new Date();
+    await terminal.save();
 
     res.json({ message: `Registro exitoso: ${type} - ${selectedActivity}`, attendance: newAttendance, userName: user.name });
   } catch (error) {
@@ -288,9 +304,63 @@ router.delete('/activities/:id', protect, async (req, res) => {
   }
 });
 
-// GET /api/terminal/token - Obtener token de terminal (Solo admin)
-router.get('/terminal/token', protect, (req, res) => {
-  res.json({ token: process.env.TERMINAL_TOKEN || 'default-terminal-token' });
+// --- Terminal endpoints (Solo admin) ---
+
+// GET /api/terminals - Listar todas las terminales
+router.get('/terminals', protect, async (req, res) => {
+  try {
+    const terminals = await Terminal.find().sort({ createdAt: -1 });
+    res.json(terminals);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener terminales', error: error.message });
+  }
+});
+
+// POST /api/terminals - Registrar una nueva terminal
+router.post('/terminals', protect, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ message: 'El nombre de la terminal es requerido' });
+
+    const exists = await Terminal.findOne({ name: name.trim() });
+    if (exists) return res.status(400).json({ message: 'Ya existe una terminal registrada con este nombre' });
+
+    // Generar un token criptográfico seguro
+    const token = crypto.randomBytes(24).toString('hex');
+
+    const newTerminal = new Terminal({
+      name: name.trim(),
+      token
+    });
+
+    await newTerminal.save();
+    res.json({ message: 'Terminal registrada con éxito', terminal: newTerminal });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al registrar la terminal', error: error.message });
+  }
+});
+
+// PATCH /api/terminals/:id/status - Activar/desactivar terminal
+router.patch('/terminals/:id/status', protect, async (req, res) => {
+  try {
+    const { isActive } = req.body;
+    const terminal = await Terminal.findByIdAndUpdate(req.params.id, { isActive }, { new: true });
+    if (!terminal) return res.status(404).json({ message: 'Terminal no encontrada' });
+    res.json({ message: `Terminal ${isActive ? 'activada' : 'desactivada'} con éxito`, terminal });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al cambiar estado de la terminal', error: error.message });
+  }
+});
+
+// DELETE /api/terminals/:id - Eliminar/Revocar terminal
+router.delete('/terminals/:id', protect, async (req, res) => {
+  try {
+    const terminal = await Terminal.findByIdAndDelete(req.params.id);
+    if (!terminal) return res.status(404).json({ message: 'Terminal no encontrada' });
+    res.json({ message: 'Terminal revocada y eliminada con éxito' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al eliminar la terminal', error: error.message });
+  }
 });
 
 module.exports = router;
