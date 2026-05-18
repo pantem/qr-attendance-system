@@ -19,8 +19,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const navAdmins = document.getElementById('nav-admins');
   const navActivities = document.getElementById('nav-activities');
 
+  const checkTerminalAuthorization = () => {
+    const hasToken = !!localStorage.getItem('terminalToken');
+    const authContainer = document.getElementById('authorized-scanner-container');
+    const unauthContainer = document.getElementById('unauthorized-scanner-container');
+    const btnAuthorize = document.getElementById('btn-authorize-device');
+    const btnDeauthorize = document.getElementById('btn-deauthorize-device');
+    const token = localStorage.getItem('adminToken');
+
+    if (hasToken) {
+      if (authContainer) authContainer.style.display = 'block';
+      if (unauthContainer) unauthContainer.style.display = 'none';
+      if (token) {
+        if (btnAuthorize) btnAuthorize.style.display = 'none';
+        if (btnDeauthorize) btnDeauthorize.style.display = 'flex';
+      }
+    } else {
+      if (authContainer) authContainer.style.display = 'none';
+      if (unauthContainer) unauthContainer.style.display = 'block';
+      if (token) {
+        if (btnAuthorize) btnAuthorize.style.display = 'flex';
+        if (btnDeauthorize) btnDeauthorize.style.display = 'none';
+      }
+    }
+  };
+
   const checkLogin = () => {
     const token = localStorage.getItem('adminToken');
+    const btnAuthorize = document.getElementById('btn-authorize-device');
+    const btnDeauthorize = document.getElementById('btn-deauthorize-device');
+
     if (token) {
       navUsers.style.display = 'flex';
       navReports.style.display = 'flex';
@@ -35,10 +63,13 @@ document.addEventListener('DOMContentLoaded', () => {
       navAdmins.style.display = 'none';
       btnLoginTrigger.style.display = 'flex';
       btnLogout.style.display = 'none';
+      if (btnAuthorize) btnAuthorize.style.display = 'none';
+      if (btnDeauthorize) btnDeauthorize.style.display = 'none';
       // Force to scanner view
       const scannerTab = document.querySelector('[data-view="scanner-view"]');
       if (scannerTab) scannerTab.click();
     }
+    checkTerminalAuthorization();
   };
   
 
@@ -89,6 +120,37 @@ document.addEventListener('DOMContentLoaded', () => {
     checkLogin();
   });
 
+  const btnAuthorize = document.getElementById('btn-authorize-device');
+  const btnDeauthorize = document.getElementById('btn-deauthorize-device');
+
+  if (btnAuthorize) {
+    btnAuthorize.addEventListener('click', async () => {
+      try {
+        const res = await fetch(`${API_URL}/terminal/token`, { headers: getAuthHeaders() });
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.setItem('terminalToken', data.token);
+          alert('¡Este navegador ha sido autorizado como Terminal Checador con éxito!');
+          checkTerminalAuthorization();
+        } else {
+          alert('Error al autorizar: ' + data.message);
+        }
+      } catch (err) {
+        alert('Error de conexión al servidor');
+      }
+    });
+  }
+
+  if (btnDeauthorize) {
+    btnDeauthorize.addEventListener('click', () => {
+      if (confirm('¿Estás seguro de que deseas quitar la autorización a este dispositivo? Ya no podrá registrar asistencias.')) {
+        localStorage.removeItem('terminalToken');
+        alert('Autorización removida.');
+        checkTerminalAuthorization();
+      }
+    });
+  }
+
   if(menuToggle) {
     menuToggle.addEventListener('click', () => {
       sidebar.classList.toggle('open');
@@ -118,6 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   initScanner();
+  checkLogin();
 
   // Excel Upload
   const uploadArea = document.getElementById('upload-area');

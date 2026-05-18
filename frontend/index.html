@@ -29,12 +29,18 @@
         <li id="nav-admins" data-view="admins-view" style="display: none;"><i class="fa-solid fa-user-shield"></i>
           Administradores</li>
       </ul>
-      <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+      <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.5rem;">
         <button id="btn-login-trigger" class="btn btn-secondary" style="width: 100%; justify-content: center;"><i
             class="fa-solid fa-lock"></i> Administrar</button>
         <button id="btn-logout" class="btn btn-secondary"
           style="width: 100%; justify-content: center; display: none; color: var(--danger);"><i
             class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión</button>
+        <button id="btn-authorize-device" class="btn btn-primary" style="width: 100%; justify-content: center; display: none; font-size: 0.875rem;">
+          <i class="fa-solid fa-laptop-code"></i> Autorizar Terminal
+        </button>
+        <button id="btn-deauthorize-device" class="btn btn-danger" style="width: 100%; justify-content: center; display: none; font-size: 0.875rem;">
+          <i class="fa-solid fa-circle-minus"></i> Quitar Autorización
+        </button>
       </div>
     </nav>
 
@@ -62,32 +68,42 @@
           </div>
         </div>
 
-        <!-- Selector de Actividad -->
-        <div class="card" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-          <label for="activity-selector" style="font-weight: 600; color: var(--text-color); margin: 0;"><i class="fa-solid fa-circle-play"></i> Actividad a registrar:</label>
-          <select id="activity-selector" style="flex: 1; min-width: 200px; padding: 0.5rem; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 1rem;">
-            <!-- Dinámico -->
-          </select>
-        </div>
+        <!-- Contenedor del Escáner Autorizado -->
+        <div id="authorized-scanner-container">
+          <!-- Selector de Actividad -->
+          <div class="card" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <label for="activity-selector" style="font-weight: 600; color: var(--text-color); margin: 0;"><i class="fa-solid fa-circle-play"></i> Actividad a registrar:</label>
+            <select id="activity-selector" style="flex: 1; min-width: 200px; padding: 0.5rem; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 0.375rem; font-size: 1rem;">
+              <!-- Dinámico -->
+            </select>
+          </div>
 
-        <div class="scanner-container">
-          <div class="camera-wrapper">
-            <div id="reader"></div>
-            <!-- Video invisible para captura de foto -->
-            <video id="photo-video" autoplay playsinline style="display: none;"></video>
-            <canvas id="photo-canvas" style="display: none;"></canvas>
+          <div class="scanner-container">
+            <div class="camera-wrapper">
+              <div id="reader"></div>
+              <!-- Video invisible para captura de foto -->
+              <video id="photo-video" autoplay playsinline style="display: none;"></video>
+              <canvas id="photo-canvas" style="display: none;"></canvas>
 
-            <!-- Countdown Overlay -->
-            <div id="countdown-overlay" class="countdown-overlay">
-              <span id="countdown-number">3</span>
+              <!-- Countdown Overlay -->
+              <div id="countdown-overlay" class="countdown-overlay">
+                <span id="countdown-number">3</span>
+              </div>
+            </div>
+
+            <div class="status-panel" id="scan-status">
+              <i class="fa-solid fa-camera fa-3x" style="color: #6c757d; margin-bottom: 1rem;"></i>
+              <h3>Esperando Código QR...</h3>
+              <p>Por favor, ubica el QR dentro del marco.</p>
             </div>
           </div>
+        </div>
 
-          <div class="status-panel" id="scan-status">
-            <i class="fa-solid fa-camera fa-3x" style="color: #6c757d; margin-bottom: 1rem;"></i>
-            <h3>Esperando Código QR...</h3>
-            <p>Por favor, ubica el QR dentro del marco.</p>
-          </div>
+        <!-- Contenedor No Autorizado -->
+        <div id="unauthorized-scanner-container" style="display: none; text-align: center; padding: 4rem 2rem; background: var(--bg-card); border-radius: 0.5rem; border: 1px dashed var(--danger); margin-top: 1.5rem;">
+          <i class="fa-solid fa-laptop-code fa-4x" style="color: var(--danger); margin-bottom: 1.5rem;"></i>
+          <h2 style="color: var(--danger); margin-bottom: 0.5rem;">Terminal No Autorizada</h2>
+          <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 1.5rem;">Este navegador o dispositivo no tiene permiso para registrar asistencias. Por favor, solicita a un administrador que inicie sesión y autorice esta terminal.</p>
         </div>
       </section>
 

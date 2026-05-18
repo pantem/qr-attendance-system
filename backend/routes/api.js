@@ -170,6 +170,12 @@ router.patch('/users/:id/status', protect, async (req, res) => {
 // POST /api/attendance - Registrar asistencia
 router.post('/attendance', async (req, res) => {
   try {
+    const clientToken = req.headers['x-terminal-token'];
+    const serverToken = process.env.TERMINAL_TOKEN || 'default-terminal-token';
+    if (clientToken !== serverToken) {
+      return res.status(403).json({ message: 'Este dispositivo no está autorizado para registrar asistencias.' });
+    }
+
     const { identifier, photo, activity } = req.body;
     if (!identifier || !photo) return res.status(400).json({ message: 'Faltan datos' });
 
@@ -273,6 +279,11 @@ router.delete('/activities/:id', protect, async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error al eliminar', error: error.message });
   }
+});
+
+// GET /api/terminal/token - Obtener token de terminal (Solo admin)
+router.get('/terminal/token', protect, (req, res) => {
+  res.json({ token: process.env.TERMINAL_TOKEN || 'default-terminal-token' });
 });
 
 module.exports = router;

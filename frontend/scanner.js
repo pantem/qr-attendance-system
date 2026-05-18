@@ -103,7 +103,10 @@ export function initScanner() {
     try {
       const res = await fetch(`${API_URL}/attendance`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-terminal-token': localStorage.getItem('terminalToken') || ''
+        },
         body: JSON.stringify({
           identifier: decodedText,
           photo: photoBase64,
