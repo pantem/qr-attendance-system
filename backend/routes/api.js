@@ -187,8 +187,15 @@ router.post('/attendance', async (req, res) => {
 
     const lastAttendance = await Attendance.findOne({ user: user._id, activity: selectedActivity }).sort({ timestamp: -1 });
     let type = 'Entrada';
-    if (lastAttendance && lastAttendance.type === 'Entrada') {
-      type = 'Salida';
+    if (selectedActivity === 'Jornada Laboral') {
+      if (lastAttendance && lastAttendance.type === 'Entrada') {
+        type = 'Salida';
+      }
+    } else {
+      type = 'Inicio';
+      if (lastAttendance && lastAttendance.type === 'Inicio') {
+        type = 'Fin';
+      }
     }
 
     // Subir a Cloudinary

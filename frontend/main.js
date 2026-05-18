@@ -384,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tr.innerHTML = `
           <td><strong>${record.user?.name || 'Desconocido'}</strong><br><small style="color: var(--text-muted)">${record.user?.area || '-'} / ${record.user?.position || '-'}</small></td>
           <td>${record.user?.identifier || '-'}</td>
-          <td><span class="badge ${record.type === 'Entrada' ? 'badge-entrada' : 'badge-salida'}">${record.type}</span></td>
+          <td><span class="badge ${(record.type === 'Entrada' || record.type === 'Inicio') ? 'badge-entrada' : 'badge-salida'}">${record.type}</span></td>
           <td><span class="badge badge-neutral">${record.activity || 'Jornada Laboral'}</span></td>
           <td>${date.toLocaleString()}</td>
           <td>${record.photo ? `<img src="${record.photo}" class="photo-img" style="cursor: pointer; width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onclick="viewPhoto('${record.photo}', '${record.user?.name || 'Desconocido'}')" title="Ver en grande"/>` : '-'}</td>

@@ -120,7 +120,7 @@ export function initScanner() {
         statusPanel.classList.add('success');
         statusPanel.innerHTML = `
           <i class="fa-solid fa-circle-check fa-3x" style="margin-bottom: 1rem;"></i>
-          <h3>¡${data.attendance.type} Registrada!</h3>
+          <h3>¡${data.attendance.type} Registrad${(data.attendance.type === 'Inicio' || data.attendance.type === 'Fin') ? 'o' : 'a'}!</h3>
           <p>${data.userName}<br><small>${data.attendance.activity}</small></p>
         `;
       } else {
