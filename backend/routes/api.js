@@ -8,6 +8,7 @@ const Attendance = require('../models/Attendance');
 const Activity = require('../models/Activity');
 const Terminal = require('../models/Terminal');
 const AuditLog = require('../models/AuditLog');
+const Admin = require('../models/Admin');
 const crypto = require('crypto');
 const { protect } = require('../middleware/auth');
 const cloudinary = require('cloudinary').v2;
@@ -446,8 +447,11 @@ router.post('/audit/export', protect, async (req, res) => {
     const backupUrl = await uploadStreamPromise(buffer, filename);
 
     // Crear registro de auditoría
+    const adminUser = await Admin.findById(req.adminId);
+    const username = adminUser ? adminUser.username : 'admin';
+
     const newLog = new AuditLog({
-      username: req.user.username,
+      username,
       action: 'Exportar',
       details: `Exportó ${records.length} asistencias en Excel. ${rangeDetails}.`,
       backupUrl
@@ -457,6 +461,48 @@ router.post('/audit/export', protect, async (req, res) => {
     res.json({ backupUrl, count: records.length });
   } catch (error) {
     res.status(500).json({ message: 'Error al procesar exportación y respaldo', error: error.message });
+  }
+});
+
+// GET /api/audit/export - Descargar Excel directamente como fallback o enlace directo
+router.get('/audit/export', protect, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    let query = {};
+    let rangeDetails = 'Todos los registros';
+
+    if (startDate && endDate) {
+      const start = new Date(startDate + "T00:00:00");
+      const end = new Date(endDate + "T23:59:59");
+      query.timestamp = { $gte: start, $lte: end };
+      rangeDetails = `Rango: ${startDate} al ${endDate}`;
+    }
+
+    const records = await Attendance.find(query).populate('user').sort({ timestamp: -1 });
+
+    const rows = records.map(record => ({
+      'Empleado': record.user ? record.user.name : 'Desconocido',
+      'Identificador': record.user ? record.user.identifier : '-',
+      'Área': record.user ? record.user.area : '-',
+      'Puesto': record.user ? record.user.position : '-',
+      'Tipo de Registro': record.type,
+      'Actividad': record.activity || 'Jornada Laboral',
+      'Terminal': record.terminalName || 'Web App / Desconocido',
+      'Fecha y Hora': new Date(record.timestamp).toLocaleString(),
+      'Fotografía URL': record.photo || 'Sin fotografía'
+    }));
+
+    const worksheet = xlsx.utils.json_to_sheet(rows);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Asistencias");
+    const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=Reporte_Asistencias_${startDate || 'todas'}_a_${endDate || 'todas'}.xlsx`);
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).send('Error al exportar archivo: ' + error.message);
   }
 });
 
@@ -501,8 +547,11 @@ router.delete('/attendance/purge', protect, async (req, res) => {
     await Attendance.deleteMany({ timestamp: { $gte: start, $lte: end } });
 
     // Crear registro de auditoría
+    const adminUser = await Admin.findById(req.adminId);
+    const username = adminUser ? adminUser.username : 'admin';
+
     const newLog = new AuditLog({
-      username: req.user.username,
+      username,
       action: 'Eliminar',
       details: `Purgó físicamente ${records.length} asistencias y ${publicIds.length} fotos de Cloudinary. Rango: ${startDate} al ${endDate}.`
     });
