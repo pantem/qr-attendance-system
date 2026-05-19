@@ -213,12 +213,12 @@ router.post('/attendance', async (req, res) => {
       photoUrl = uploadRes.secure_url;
     }
 
-    const newAttendance = new Attendance({ 
-      user: user._id, 
-      type, 
-      photo: photoUrl, 
+    const newAttendance = new Attendance({
+      user: user._id,
+      type,
+      photo: photoUrl,
       activity: selectedActivity,
-      terminalName: terminal.name 
+      terminalName: terminal.name
     });
     await newAttendance.save();
 
@@ -506,13 +506,13 @@ router.get('/audit/export', protect, async (req, res) => {
   }
 });
 
-// DELETE /api/attendance/purge - Purgar físicamente asistencias y fotos en Cloudinary
+// DELETE /api/attendance/purge - Borrar físicamente asistencias y fotos en Cloudinary
 router.delete('/attendance/purge', protect, async (req, res) => {
   try {
     const { startDate, endDate } = req.body;
 
     if (!startDate || !endDate) {
-      return res.status(400).json({ message: 'Las fechas inicial y final son obligatorias para purgar.' });
+      return res.status(400).json({ message: 'Las fechas inicial y final son obligatorias para borrar.' });
     }
 
     const start = new Date(startDate + "T00:00:00");
@@ -559,7 +559,7 @@ router.delete('/attendance/purge', protect, async (req, res) => {
 
     res.json({ message: `Purga exitosa. Se eliminaron físicamente ${records.length} asistencias y ${publicIds.length} fotos del servidor.` });
   } catch (error) {
-    res.status(500).json({ message: 'Error al purgar los registros de asistencia', error: error.message });
+    res.status(500).json({ message: 'Error al borrar los registros de asistencia', error: error.message });
   }
 });
 

@@ -641,22 +641,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const endDate = document.getElementById('filter-end-date').value;
 
       if (!startDate || !endDate) {
-        alert('Por favor, selecciona tanto la Fecha Inicial como la Fecha Final para realizar la purga física.');
+        alert('Por favor, selecciona tanto la Fecha Inicial como la Fecha Final para realizar la eliminación física.');
         return;
       }
 
       const doubleConfirm = confirm(`¿Estás COMPLETAMENTE SEGURO de que deseas eliminar permanentemente todas las asistencias y fotos de Cloudinary del rango: ${startDate} al ${endDate}?\n\nEsta acción no se puede deshacer.`);
       if (!doubleConfirm) return;
 
-      const keyPrompt = prompt("ADVERTENCIA DE SEGURIDAD:\nEsta acción borrará de forma irreversible los archivos físicos de fotografías en el servidor y los documentos en la base de datos.\n\nPara proceder, escribe la palabra PURGAR en mayúsculas:");
-      if (keyPrompt !== 'PURGAR') {
+      const keyPrompt = prompt("ADVERTENCIA DE SEGURIDAD:\nEsta acción borrará de forma irreversible los archivos físicos de fotografías en el servidor y los documentos en la base de datos.\n\nPara proceder, escribe la palabra BORRAR en mayúsculas:");
+      if (keyPrompt !== 'BORRAR') {
         alert('Confirmación incorrecta. Acción cancelada.');
         return;
       }
 
       const originalText = btnPurgeRange.innerHTML;
       btnPurgeRange.disabled = true;
-      btnPurgeRange.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Purgando...';
+      btnPurgeRange.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...';
 
       try {
         const res = await fetch(`${API_URL}/attendance/purge`, {
@@ -672,10 +672,10 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('filter-end-date').value = '';
           loadReports(); // Recargar reportes
         } else {
-          alert('Error al purgar: ' + data.message);
+          alert('Error al borrar: ' + data.message);
         }
       } catch (err) {
-        alert('Error de conexión al servidor al purgar');
+        alert('Error de conexión al servidor al borrar');
       } finally {
         btnPurgeRange.disabled = false;
         btnPurgeRange.innerHTML = originalText;
