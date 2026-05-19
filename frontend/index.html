@@ -19,7 +19,8 @@
           <i class="fa-solid fa-qrcode fa-2x"></i>
           <h2>Checador QR</h2>
         </div>
-        <button id="menu-close" class="btn-icon mobile-menu-close" style="margin-right: 0;"><i class="fa-solid fa-xmark fa-xl"></i></button>
+        <button id="menu-close" class="btn-icon mobile-menu-close" style="margin-right: 0;"><i
+            class="fa-solid fa-xmark fa-xl"></i></button>
       </div>
       <ul class="nav-links">
         <li class="active" data-view="scanner-view"><i class="fa-solid fa-camera"></i> Escáner</li>
@@ -34,7 +35,8 @@
           Terminales</li>
         <li id="nav-admins" data-view="admins-view" style="display: none;"><i class="fa-solid fa-user-shield"></i>
           Administradores</li>
-        <li id="nav-bitacora" data-view="bitacora-view" style="display: none;"><i class="fa-solid fa-clock-rotate-left"></i>
+        <li id="nav-bitacora" data-view="bitacora-view" style="display: none;"><i
+            class="fa-solid fa-clock-rotate-left"></i>
           Bitácora</li>
       </ul>
       <div
@@ -74,7 +76,8 @@
           <!-- Fila de Selector y Visualización de Actividad lado a lado -->
           <div class="activity-selector-row">
             <!-- Selector de Actividad en Botones -->
-            <div class="card" style="padding: 1.25rem; display: flex; flex-direction: column; justify-content: center; height: 100%; box-sizing: border-box; margin-bottom: 0;">
+            <div class="card"
+              style="padding: 1.25rem; display: flex; flex-direction: column; justify-content: center; height: 100%; box-sizing: border-box; margin-bottom: 0;">
               <label style="font-weight: 600; color: var(--text-color); margin-bottom: 0.75rem; display: block;">
                 <i class="fa-solid fa-circle-play" style="color: var(--primary);"></i> Selecciona la actividad:
               </label>
@@ -84,18 +87,23 @@
             </div>
 
             <!-- Indicador de Actividad Seleccionada -->
-            <div class="selected-activity-banner" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 0.75rem; padding: 1.25rem; box-sizing: border-box; height: 100%; margin-bottom: 0;">
+            <div class="selected-activity-banner"
+              style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 0.75rem; padding: 1.25rem; box-sizing: border-box; height: 100%; margin-bottom: 0;">
               <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Estado de Registro:</span>
+                <span
+                  style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Estado
+                  de Registro:</span>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                   <i class="fa-solid fa-bell-concierge fa-fade" style="color: var(--primary); font-size: 1.2rem;"></i>
                   <span id="selected-activity-text" style="font-size: 1.25rem; font-weight: 800;">Jornada Laboral</span>
                 </div>
               </div>
-              
+
               <!-- Tiempo Foto integrado elegantemente -->
-              <div style="background: rgba(15, 23, 42, 0.4); padding: 0.4rem 0.875rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 0.5rem; border: 1px solid var(--border-color); margin-top: 0.25rem;">
-                <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500; display: inline-flex; align-items: center; gap: 0.25rem;">
+              <div
+                style="background: rgba(15, 23, 42, 0.4); padding: 0.4rem 0.875rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 0.5rem; border: 1px solid var(--border-color); margin-top: 0.25rem;">
+                <label
+                  style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500; display: inline-flex; align-items: center; gap: 0.25rem;">
                   <i class="fa-solid fa-clock" style="color: var(--primary);"></i> Retardo foto:
                 </label>
                 <input type="number" id="countdown-time" value="3" min="0" max="10"
@@ -206,25 +214,32 @@
           </div>
         </div>
 
-        <div class="date-filter-row card" style="display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1.5rem; flex-wrap: wrap; padding: 1.25rem;">
+        <div class="date-filter-row card"
+          style="display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1.5rem; flex-wrap: wrap; padding: 1.25rem;">
           <div style="flex: 1; min-width: 150px;">
-            <label class="form-label" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
+            <label class="form-label"
+              style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
               <i class="fa-solid fa-calendar-alt" style="color: var(--primary);"></i> Fecha Inicial
             </label>
-            <input type="date" id="filter-start-date" class="form-control" style="width: 100%; padding: 0.6rem 0.8rem; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 0.5rem; outline: none; font-size: 0.9rem;">
+            <input type="date" id="filter-start-date" class="form-control"
+              style="width: 100%; padding: 0.6rem 0.8rem; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 0.5rem; outline: none; font-size: 0.9rem;">
           </div>
           <div style="flex: 1; min-width: 150px;">
-            <label class="form-label" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
+            <label class="form-label"
+              style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
               <i class="fa-solid fa-calendar-alt" style="color: var(--primary);"></i> Fecha Final
             </label>
-            <input type="date" id="filter-end-date" class="form-control" style="width: 100%; padding: 0.6rem 0.8rem; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 0.5rem; outline: none; font-size: 0.9rem;">
+            <input type="date" id="filter-end-date" class="form-control"
+              style="width: 100%; padding: 0.6rem 0.8rem; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 0.5rem; outline: none; font-size: 0.9rem;">
           </div>
           <div style="display: flex; gap: 0.75rem; min-width: 280px; flex: 1.2;">
-            <button id="btn-export-filtered" class="btn btn-primary" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.7rem; font-weight: 600;">
+            <button id="btn-export-filtered" class="btn btn-primary"
+              style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.7rem; font-weight: 600;">
               <i class="fa-solid fa-file-excel fa-lg"></i> Exportar Rango
             </button>
-            <button id="btn-purge-range" class="btn btn-danger" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.7rem; font-weight: 600; background-color: var(--danger); border-color: var(--danger);">
-              <i class="fa-solid fa-trash-can"></i> Purgar Rango
+            <button id="btn-purge-range" class="btn btn-danger"
+              style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.7rem; font-weight: 600; background-color: var(--danger); border-color: var(--danger);">
+              <i class="fa-solid fa-trash-can"></i> Borrar Rango
             </button>
           </div>
         </div>
@@ -347,7 +362,7 @@
       <section id="bitacora-view" class="view">
         <div class="header">
           <h1>Bitácora de Auditoría</h1>
-          <p>Historial de exportaciones y purga física de datos en el sistema.</p>
+          <p>Historial de exportaciones y borrado físico de datos en el sistema.</p>
         </div>
 
         <div class="card mt-2">

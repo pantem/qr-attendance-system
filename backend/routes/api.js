@@ -553,11 +553,11 @@ router.delete('/attendance/purge', protect, async (req, res) => {
     const newLog = new AuditLog({
       username,
       action: 'Eliminar',
-      details: `Purgó físicamente ${records.length} asistencias y ${publicIds.length} fotos de Cloudinary. Rango: ${startDate} al ${endDate}.`
+      details: `Se eliminaron físicamente ${records.length} asistencias y ${publicIds.length} fotos de Cloudinary. Rango: ${startDate} al ${endDate}.`
     });
     await newLog.save();
 
-    res.json({ message: `Purga exitosa. Se eliminaron físicamente ${records.length} asistencias y ${publicIds.length} fotos del servidor.` });
+    res.json({ message: `Eliminación exitosa. Se eliminaron físicamente ${records.length} asistencias y ${publicIds.length} fotos del servidor.` });
   } catch (error) {
     res.status(500).json({ message: 'Error al borrar los registros de asistencia', error: error.message });
   }
