@@ -1,7 +1,7 @@
 import { initScanner, loadActivityOptions } from './scanner.js';
 
-const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-  ? 'http://localhost:5000/api' 
+const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000/api'
   : `http://${window.location.hostname}:5000/api`);
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     checkTerminalAuthorization();
   };
-  
+
 
   const getAuthHeaders = (isFormData = false) => {
     const token = localStorage.getItem('adminToken');
@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = document.getElementById('login-password').value;
     const submitBtn = loginForm.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
-    
+
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Ingresando...';
 
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if(menuToggle) {
+  if (menuToggle) {
     menuToggle.addEventListener('click', (e) => {
       e.stopPropagation(); // Avoid immediately triggering click-outside
       sidebar.classList.toggle('open');
@@ -330,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (targetViewId === 'activities-view') loadActivities();
       else if (targetViewId === 'terminals-view') loadTerminals();
       else if (targetViewId === 'scanner-view') loadActivityOptions();
-      
+
       // Close sidebar on mobile
       if (window.innerWidth <= 768) {
         sidebar.classList.remove('open');
@@ -384,13 +384,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Users CRUD
-  window.editUser = function(userStr) {
+  window.editUser = function (userStr) {
     const user = JSON.parse(decodeURIComponent(userStr));
     document.getElementById('modal-title').textContent = 'Editar Empleado';
     document.getElementById('employee-id').value = user._id;
     document.getElementById('employee-name').value = user.name;
     const identifierField = document.getElementById('employee-identifier');
-    if(identifierField) {
+    if (identifierField) {
       identifierField.value = user.identifier || '';
       identifierField.readOnly = true;
     }
@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
     openModal();
   };
 
-  window.toggleStatus = async function(id, currentStatus) {
+  window.toggleStatus = async function (id, currentStatus) {
     if (!confirm(`¿Estás seguro de ${currentStatus ? 'desactivar' : 'activar'} a este empleado?`)) return;
     try {
       const res = await fetch(`${API_URL}/users/${id}/status`, {
@@ -412,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) { console.error(err); alert('Error de conexión'); }
   };
 
-  window.viewQR = function(userStr) {
+  window.viewQR = function (userStr) {
     const user = JSON.parse(decodeURIComponent(userStr));
     document.getElementById('qr-modal-name').textContent = user.name;
     document.getElementById('qr-modal-id').textContent = 'ID: ' + user.identifier;
@@ -440,9 +440,9 @@ document.addEventListener('DOMContentLoaded', () => {
       renderTableWithPagination('users', users, '#users-table tbody', 'users-pagination', user => {
         const tr = document.createElement('tr');
         if (!user.isActive) tr.classList.add('user-inactive');
-        
+
         const userStr = encodeURIComponent(JSON.stringify(user));
-        
+
         tr.innerHTML = `
           <td><strong>${user.name}</strong><br><small style="color: var(--text-muted)">${user.identifier}</small></td>
           <td>${user.area || '-'}<br><small style="color: var(--text-muted)">${user.position || '-'}</small></td>
@@ -475,12 +475,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('employee-form');
 
   const openModal = () => modal.classList.add('active');
-  const closeModal = () => { 
-    modal.classList.remove('active'); 
-    form.reset(); 
-    document.getElementById('employee-id').value = ''; 
+  const closeModal = () => {
+    modal.classList.remove('active');
+    form.reset();
+    document.getElementById('employee-id').value = '';
     const identifierField = document.getElementById('employee-identifier');
-    if(identifierField) identifierField.readOnly = false;
+    if (identifierField) identifierField.readOnly = false;
   };
 
   btnNew.addEventListener('click', () => {
@@ -500,7 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('photo-modal').classList.remove('active');
   });
 
-  window.viewPhoto = function(photoUrl, userName) {
+  window.viewPhoto = function (photoUrl, userName) {
     document.getElementById('photo-modal-name').textContent = userName;
     document.getElementById('photo-modal-img').src = photoUrl;
     document.getElementById('photo-modal').classList.add('active');
@@ -516,7 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
       position: document.getElementById('employee-position').value,
       employeeType: document.getElementById('employee-type').value,
     };
-    
+
     const method = id ? 'PUT' : 'POST';
     const url = id ? `${API_URL}/users/${id}` : `${API_URL}/users`;
 
@@ -537,7 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const records = await res.json();
       tbody.innerHTML = '';
       if (records.length === 0) return tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay registros</td></tr>';
-      
+
       loadedAttendanceRecords = records;
 
       renderTableWithPagination('reports', records, '#reports-table tbody', 'reports-pagination', record => {
@@ -591,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const passwordModal = document.getElementById('password-modal');
   const adminForm = document.getElementById('admin-form');
   const passwordForm = document.getElementById('password-form');
-  
+
   document.getElementById('btn-new-admin').addEventListener('click', () => {
     adminModal.classList.add('active');
   });
@@ -608,12 +608,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.deleteAdmin = async (id) => {
-    if(!confirm('¿Eliminar administrador?')) return;
+    if (!confirm('¿Eliminar administrador?')) return;
     try {
       const res = await fetch(`${API_URL}/auth/admins/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
       const data = await res.json();
-      if(res.ok) loadAdmins(); else alert(data.message);
-    } catch(e) { alert('Error de conexión'); }
+      if (res.ok) loadAdmins(); else alert(data.message);
+    } catch (e) { alert('Error de conexión'); }
   };
 
   adminForm.addEventListener('submit', async (e) => {
@@ -626,10 +626,10 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ username, password })
       });
       const data = await res.json();
-      if(res.ok) {
+      if (res.ok) {
         adminModal.classList.remove('active'); adminForm.reset(); loadAdmins();
       } else alert(data.message);
-    } catch(err) { alert('Error'); }
+    } catch (err) { alert('Error'); }
   });
 
   passwordForm.addEventListener('submit', async (e) => {
@@ -642,10 +642,10 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ newPassword })
       });
       const data = await res.json();
-      if(res.ok) {
+      if (res.ok) {
         passwordModal.classList.remove('active'); passwordForm.reset(); alert('Contraseña actualizada');
       } else alert(data.message);
-    } catch(err) { alert('Error'); }
+    } catch (err) { alert('Error'); }
   });
 
   async function loadAdmins() {
@@ -655,8 +655,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`${API_URL}/auth/admins`, { headers: getAuthHeaders() });
       const admins = await res.json();
       tbody.innerHTML = '';
-      if(admins.length === 0) return tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No hay administradores</td></tr>';
-      
+      if (admins.length === 0) return tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No hay administradores</td></tr>';
+
       renderTableWithPagination('admins', admins, '#admins-table tbody', 'admins-pagination', admin => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -677,6 +677,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const activityForm = document.getElementById('activity-form');
   const btnNewActivity = document.getElementById('btn-new-activity');
   const btnCloseActivity = document.getElementById('btn-close-activity');
+
+  const photoModal = document.getElementById('photo-modal');
+  if (photoModal) {
+    photoModal.addEventListener('click', (e) => {
+      if (e.target === photoModal) {
+        photoModal.classList.remove('active');
+      }
+    });
+  }
 
   const openActivityModal = () => activityModal.classList.add('active');
   const closeActivityModal = () => {
@@ -802,7 +811,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const date = new Date(term.createdAt);
         const lastActiveDate = term.lastActive ? new Date(term.lastActive).toLocaleString() : 'Nunca';
         const tr = document.createElement('tr');
-        
+
         const maskedToken = term.token.slice(0, 4) + '...' + term.token.slice(-4);
 
         tr.innerHTML = `
@@ -831,7 +840,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  window.toggleTerminalStatus = async function(id, currentStatus) {
+  window.toggleTerminalStatus = async function (id, currentStatus) {
     if (!confirm(`¿Estás seguro de ${currentStatus ? 'desactivar' : 'activar'} esta terminal?`)) return;
     try {
       const res = await fetch(`${API_URL}/terminals/${id}/status`, {
@@ -858,7 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  window.deleteTerminal = async function(id) {
+  window.deleteTerminal = async function (id) {
     if (!confirm('¿Estás seguro de revocar y eliminar por completo esta terminal? Todos sus accesos serán denegados de inmediato.')) return;
     try {
       const res = await fetch(`${API_URL}/terminals/${id}`, {
