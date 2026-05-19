@@ -7,6 +7,7 @@ const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const Activity = require('../models/Activity');
 const Terminal = require('../models/Terminal');
+const AuditLog = require('../models/AuditLog');
 const crypto = require('crypto');
 const { protect } = require('../middleware/auth');
 const cloudinary = require('cloudinary').v2;
@@ -377,6 +378,139 @@ router.delete('/terminals/:id', protect, async (req, res) => {
     res.json({ message: 'Terminal revocada y eliminada con éxito' });
   } catch (error) {
     res.status(500).json({ message: 'Error al eliminar la terminal', error: error.message });
+  }
+});
+
+// GET /api/audit - Obtener registros de auditoría
+router.get('/audit', protect, async (req, res) => {
+  try {
+    const logs = await AuditLog.find().sort({ timestamp: -1 });
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener registros de auditoría', error: error.message });
+  }
+});
+
+// POST /api/audit/export - Registrar exportación y subir respaldo a Cloudinary
+router.post('/audit/export', protect, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.body;
+    let query = {};
+    let rangeDetails = 'Todos los registros';
+
+    if (startDate && endDate) {
+      const start = new Date(startDate + "T00:00:00");
+      const end = new Date(endDate + "T23:59:59");
+      query.timestamp = { $gte: start, $lte: end };
+      rangeDetails = `Rango: ${startDate} al ${endDate}`;
+    }
+
+    const records = await Attendance.find(query).populate('user').sort({ timestamp: -1 });
+
+    // Preparar filas para Excel
+    const rows = records.map(record => ({
+      'Empleado': record.user ? record.user.name : 'Desconocido',
+      'Identificador': record.user ? record.user.identifier : '-',
+      'Área': record.user ? record.user.area : '-',
+      'Puesto': record.user ? record.user.position : '-',
+      'Tipo de Registro': record.type,
+      'Actividad': record.activity || 'Jornada Laboral',
+      'Terminal': record.terminalName || 'Web App / Desconocido',
+      'Fecha y Hora': new Date(record.timestamp).toLocaleString(),
+      'Fotografía URL': record.photo || 'Sin fotografía'
+    }));
+
+    // Generar libro de trabajo con xlsx
+    const worksheet = xlsx.utils.json_to_sheet(rows);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Asistencias");
+    const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    // Subir a Cloudinary (resource_type: raw)
+    const uploadStreamPromise = (fileBuffer, filename) => new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'raw',
+          folder: 'attendance_backups',
+          public_id: filename
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result.secure_url);
+        }
+      );
+      stream.end(fileBuffer);
+    });
+
+    const filename = `Reporte_Asistencias_${Date.now()}.xlsx`;
+    const backupUrl = await uploadStreamPromise(buffer, filename);
+
+    // Crear registro de auditoría
+    const newLog = new AuditLog({
+      username: req.user.username,
+      action: 'Exportar',
+      details: `Exportó ${records.length} asistencias en Excel. ${rangeDetails}.`,
+      backupUrl
+    });
+    await newLog.save();
+
+    res.json({ backupUrl, count: records.length });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al procesar exportación y respaldo', error: error.message });
+  }
+});
+
+// DELETE /api/attendance/purge - Purgar físicamente asistencias y fotos en Cloudinary
+router.delete('/attendance/purge', protect, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.body;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ message: 'Las fechas inicial y final son obligatorias para purgar.' });
+    }
+
+    const start = new Date(startDate + "T00:00:00");
+    const end = new Date(endDate + "T23:59:59");
+
+    const records = await Attendance.find({ timestamp: { $gte: start, $lte: end } });
+    if (records.length === 0) {
+      return res.status(404).json({ message: 'No hay asistencias registradas en el rango de fechas indicado.' });
+    }
+
+    // Extraer Public IDs de Cloudinary
+    const extractPublicId = (url) => {
+      const parts = url.split('/');
+      const folderIndex = parts.indexOf('qr_attendance');
+      if (folderIndex !== -1) {
+        const filename = parts.slice(folderIndex).join('/');
+        return filename.split('.')[0]; // Eliminar extensión .jpg
+      }
+      return null;
+    };
+
+    const publicIds = records
+      .map(r => r.photo ? extractPublicId(r.photo) : null)
+      .filter(id => id !== null);
+
+    // Borrado físico de fotos en Cloudinary
+    if (publicIds.length > 0) {
+      await cloudinary.api.delete_resources(publicIds);
+    }
+
+    // Borrado físico en MongoDB
+    await Attendance.deleteMany({ timestamp: { $gte: start, $lte: end } });
+
+    // Crear registro de auditoría
+    const newLog = new AuditLog({
+      username: req.user.username,
+      action: 'Eliminar',
+      details: `Purgó físicamente ${records.length} asistencias y ${publicIds.length} fotos de Cloudinary. Rango: ${startDate} al ${endDate}.`
+    });
+    await newLog.save();
+
+    res.json({ message: `Purga exitosa. Se eliminaron físicamente ${records.length} asistencias y ${publicIds.length} fotos del servidor.` });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al purgar los registros de asistencia', error: error.message });
   }
 });
 

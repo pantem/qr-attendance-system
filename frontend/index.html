@@ -34,6 +34,8 @@
           Terminales</li>
         <li id="nav-admins" data-view="admins-view" style="display: none;"><i class="fa-solid fa-user-shield"></i>
           Administradores</li>
+        <li id="nav-bitacora" data-view="bitacora-view" style="display: none;"><i class="fa-solid fa-clock-rotate-left"></i>
+          Bitácora</li>
       </ul>
       <div
         style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.5rem;">
@@ -197,16 +199,34 @@
 
       <!-- Reports View -->
       <section id="reports-view" class="view">
-        <div class="header"
-          style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div class="header">
           <div>
             <h1>Reporte de Asistencias</h1>
             <p>Historial de entradas y salidas con captura fotográfica.</p>
           </div>
-          <button class="btn btn-success" id="btn-export-excel"
-            style="background-color: #10b981; border-color: #10b981; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600;">
-            <i class="fa-solid fa-file-excel fa-lg"></i> Exportar Excel
-          </button>
+        </div>
+
+        <div class="date-filter-row card" style="display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1.5rem; flex-wrap: wrap; padding: 1.25rem;">
+          <div style="flex: 1; min-width: 150px;">
+            <label class="form-label" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
+              <i class="fa-solid fa-calendar-alt" style="color: var(--primary);"></i> Fecha Inicial
+            </label>
+            <input type="date" id="filter-start-date" class="form-control" style="width: 100%; padding: 0.6rem 0.8rem; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 0.5rem; outline: none; font-size: 0.9rem;">
+          </div>
+          <div style="flex: 1; min-width: 150px;">
+            <label class="form-label" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
+              <i class="fa-solid fa-calendar-alt" style="color: var(--primary);"></i> Fecha Final
+            </label>
+            <input type="date" id="filter-end-date" class="form-control" style="width: 100%; padding: 0.6rem 0.8rem; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 0.5rem; outline: none; font-size: 0.9rem;">
+          </div>
+          <div style="display: flex; gap: 0.75rem; min-width: 280px; flex: 1.2;">
+            <button id="btn-export-filtered" class="btn btn-primary" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.7rem; font-weight: 600;">
+              <i class="fa-solid fa-file-excel fa-lg"></i> Exportar Rango
+            </button>
+            <button id="btn-purge-range" class="btn btn-danger" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.7rem; font-weight: 600; background-color: var(--danger); border-color: var(--danger);">
+              <i class="fa-solid fa-trash-can"></i> Purgar Rango
+            </button>
+          </div>
         </div>
 
         <div class="card">
@@ -320,6 +340,36 @@
             </table>
           </div>
           <div id="terminals-pagination"></div>
+        </div>
+      </section>
+
+      <!-- Bitácora View -->
+      <section id="bitacora-view" class="view">
+        <div class="header">
+          <h1>Bitácora de Auditoría</h1>
+          <p>Historial de exportaciones y purga física de datos en el sistema.</p>
+        </div>
+
+        <div class="card mt-2">
+          <div class="flex-between" style="margin-bottom: 1rem;">
+            <h2>Registro de Acciones Administrativas</h2>
+          </div>
+          <div class="table-responsive">
+            <table class="table" id="bitacora-table">
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  <th>Acción</th>
+                  <th>Detalles</th>
+                  <th>Fecha y Hora</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Contenido Dinámico -->
+              </tbody>
+            </table>
+          </div>
+          <div id="bitacora-pagination"></div>
         </div>
       </section>
     </main>

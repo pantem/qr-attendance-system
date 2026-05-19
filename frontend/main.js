@@ -27,7 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
     reports: { currentPage: 1, pageSize: 10 },
     activities: { currentPage: 1, pageSize: 10 },
     terminals: { currentPage: 1, pageSize: 10 },
-    admins: { currentPage: 1, pageSize: 10 }
+    admins: { currentPage: 1, pageSize: 10 },
+    bitacora: { currentPage: 1, pageSize: 10 }
   };
 
   function renderTableWithPagination(key, data, tbodySelector, paginationContainerId, renderRowFn) {
@@ -176,6 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
       navActivities.style.display = 'flex';
       navTerminals.style.display = 'flex';
       navAdmins.style.display = 'flex';
+      const navBitacora = document.getElementById('nav-bitacora');
+      if (navBitacora) navBitacora.style.display = 'flex';
       btnLoginTrigger.style.display = 'none';
       btnLogout.style.display = 'flex';
     } else {
@@ -184,6 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
       navActivities.style.display = 'none';
       navTerminals.style.display = 'none';
       navAdmins.style.display = 'none';
+      const navBitacora = document.getElementById('nav-bitacora');
+      if (navBitacora) navBitacora.style.display = 'none';
       btnLoginTrigger.style.display = 'flex';
       btnLogout.style.display = 'none';
       if (btnAuthorize) btnAuthorize.style.display = 'none';
@@ -329,6 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (targetViewId === 'admins-view') loadAdmins();
       else if (targetViewId === 'activities-view') loadActivities();
       else if (targetViewId === 'terminals-view') loadTerminals();
+      else if (targetViewId === 'bitacora-view') loadAuditLogs();
       else if (targetViewId === 'scanner-view') loadActivityOptions();
 
       // Close sidebar on mobile
@@ -529,6 +535,51 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) { alert('Error de conexión'); }
   });
 
+  const filterStart = document.getElementById('filter-start-date');
+  const filterEnd = document.getElementById('filter-end-date');
+
+  function applyLocalReportFilter() {
+    let filtered = loadedAttendanceRecords;
+    const startVal = filterStart?.value;
+    const endVal = filterEnd?.value;
+
+    if (startVal) {
+      const startDate = new Date(startVal + "T00:00:00");
+      filtered = filtered.filter(r => new Date(r.timestamp) >= startDate);
+    }
+    if (endVal) {
+      const endDate = new Date(endVal + "T23:59:59");
+      filtered = filtered.filter(r => new Date(r.timestamp) <= endDate);
+    }
+
+    const tbody = document.querySelector('#reports-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay registros para el rango de fechas seleccionado</td></tr>';
+      document.getElementById('reports-pagination').innerHTML = '';
+      return;
+    }
+
+    renderTableWithPagination('reports', filtered, '#reports-table tbody', 'reports-pagination', record => {
+      const date = new Date(record.timestamp);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${record.user?.name || 'Desconocido'}</strong><br><small style="color: var(--text-muted)">${record.user?.area || '-'} / ${record.user?.position || '-'}</small></td>
+        <td>${record.user?.identifier || '-'}</td>
+        <td><span class="badge ${(record.type === 'Entrada' || record.type === 'Inicio') ? 'badge-entrada' : 'badge-salida'}">${record.type}</span></td>
+        <td><span class="badge badge-neutral">${record.activity || 'Jornada Laboral'}</span></td>
+        <td><strong>${record.terminalName || 'Web App / Desconocido'}</strong></td>
+        <td>${date.toLocaleString()}</td>
+        <td>${record.photo ? `<img src="${record.photo}" class="photo-img" style="cursor: pointer; width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onclick="viewPhoto('${record.photo}', '${record.user?.name || 'Desconocido'}')" title="Ver en grande"/>` : '-'}</td>
+      `;
+      return tr;
+    });
+  }
+
+  if (filterStart) filterStart.addEventListener('change', applyLocalReportFilter);
+  if (filterEnd) filterEnd.addEventListener('change', applyLocalReportFilter);
+
   async function loadReports() {
     const tbody = document.querySelector('#reports-table tbody');
     tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
@@ -539,51 +590,140 @@ document.addEventListener('DOMContentLoaded', () => {
       if (records.length === 0) return tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay registros</td></tr>';
 
       loadedAttendanceRecords = records;
-
-      renderTableWithPagination('reports', records, '#reports-table tbody', 'reports-pagination', record => {
-        const date = new Date(record.timestamp);
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><strong>${record.user?.name || 'Desconocido'}</strong><br><small style="color: var(--text-muted)">${record.user?.area || '-'} / ${record.user?.position || '-'}</small></td>
-          <td>${record.user?.identifier || '-'}</td>
-          <td><span class="badge ${(record.type === 'Entrada' || record.type === 'Inicio') ? 'badge-entrada' : 'badge-salida'}">${record.type}</span></td>
-          <td><span class="badge badge-neutral">${record.activity || 'Jornada Laboral'}</span></td>
-          <td><strong>${record.terminalName || 'Web App / Desconocido'}</strong></td>
-          <td>${date.toLocaleString()}</td>
-          <td>${record.photo ? `<img src="${record.photo}" class="photo-img" style="cursor: pointer; width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onclick="viewPhoto('${record.photo}', '${record.user?.name || 'Desconocido'}')" title="Ver en grande"/>` : '-'}</td>
-        `;
-        return tr;
-      });
+      applyLocalReportFilter();
     } catch (err) { tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--danger);">Error</td></tr>'; }
   }
 
-  const btnExportExcel = document.getElementById('btn-export-excel');
-  if (btnExportExcel) {
-    btnExportExcel.addEventListener('click', () => {
-      if (loadedAttendanceRecords.length === 0) {
-        alert('No hay información cargada para exportar en este momento.');
+  const btnExportFiltered = document.getElementById('btn-export-filtered');
+  if (btnExportFiltered) {
+    btnExportFiltered.addEventListener('click', async () => {
+      const startDate = document.getElementById('filter-start-date').value;
+      const endDate = document.getElementById('filter-end-date').value;
+
+      const originalText = btnExportFiltered.innerHTML;
+      btnExportFiltered.disabled = true;
+      btnExportFiltered.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
+
+      try {
+        const res = await fetch(`${API_URL}/audit/export`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ startDate, endDate })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          // Descargar archivo de respaldo de Cloudinary automáticamente
+          const a = document.createElement('a');
+          a.href = data.backupUrl;
+          a.download = `Reporte_Asistencias_${startDate || 'todas'}_a_${endDate || 'todas'}.xlsx`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+
+          alert(`Exportación exitosa. Se descargó el reporte con ${data.count} registros y se guardó una copia de seguridad en la nube.`);
+          loadReports(); // Recargar reportes para actualizar bitácora si procede
+        } else {
+          alert('Error al exportar: ' + data.message);
+        }
+      } catch (err) {
+        alert('Error de conexión al servidor al exportar');
+      } finally {
+        btnExportFiltered.disabled = false;
+        btnExportFiltered.innerHTML = originalText;
+      }
+    });
+  }
+
+  const btnPurgeRange = document.getElementById('btn-purge-range');
+  if (btnPurgeRange) {
+    btnPurgeRange.addEventListener('click', async () => {
+      const startDate = document.getElementById('filter-start-date').value;
+      const endDate = document.getElementById('filter-end-date').value;
+
+      if (!startDate || !endDate) {
+        alert('Por favor, selecciona tanto la Fecha Inicial como la Fecha Final para realizar la purga física.');
         return;
       }
 
-      const dataToExport = loadedAttendanceRecords.map(record => ({
-        'Empleado': record.user?.name || 'Desconocido',
-        'Identificador': record.user?.identifier || '-',
-        'Área': record.user?.area || '-',
-        'Puesto': record.user?.position || '-',
-        'Tipo de Registro': record.type,
-        'Actividad': record.activity || 'Jornada Laboral',
-        'Terminal': record.terminalName || 'Web App / Desconocido',
-        'Fecha y Hora': new Date(record.timestamp).toLocaleString(),
-        'Fotografía URL': record.photo || 'Sin fotografía'
-      }));
+      const doubleConfirm = confirm(`¿Estás COMPLETAMENTE SEGURO de que deseas eliminar permanentemente todas las asistencias y fotos de Cloudinary del rango: ${startDate} al ${endDate}?\n\nEsta acción no se puede deshacer.`);
+      if (!doubleConfirm) return;
 
-      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Asistencias");
+      const keyPrompt = prompt("ADVERTENCIA DE SEGURIDAD:\nEsta acción borrará de forma irreversible los archivos físicos de fotografías en el servidor y los documentos en la base de datos.\n\nPara proceder, escribe la palabra PURGAR en mayúsculas:");
+      if (keyPrompt !== 'PURGAR') {
+        alert('Confirmación incorrecta. Acción cancelada.');
+        return;
+      }
 
-      const dateStr = new Date().toISOString().slice(0, 10);
-      XLSX.writeFile(workbook, `Reporte_Asistencias_${dateStr}.xlsx`);
+      const originalText = btnPurgeRange.innerHTML;
+      btnPurgeRange.disabled = true;
+      btnPurgeRange.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Purgando...';
+
+      try {
+        const res = await fetch(`${API_URL}/attendance/purge`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ startDate, endDate })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert(data.message);
+          // Limpiar inputs
+          document.getElementById('filter-start-date').value = '';
+          document.getElementById('filter-end-date').value = '';
+          loadReports(); // Recargar reportes
+        } else {
+          alert('Error al purgar: ' + data.message);
+        }
+      } catch (err) {
+        alert('Error de conexión al servidor al purgar');
+      } finally {
+        btnPurgeRange.disabled = false;
+        btnPurgeRange.innerHTML = originalText;
+      }
     });
+  }
+
+  async function loadAuditLogs() {
+    const tbody = document.querySelector('#bitacora-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
+    try {
+      const res = await fetch(`${API_URL}/audit`, { headers: getAuthHeaders() });
+      const logs = await res.json();
+      tbody.innerHTML = '';
+      if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay registros de auditoría</td></tr>';
+        document.getElementById('bitacora-pagination').innerHTML = '';
+        return;
+      }
+
+      renderTableWithPagination('bitacora', logs, '#bitacora-table tbody', 'bitacora-pagination', log => {
+        const date = new Date(log.timestamp);
+        const tr = document.createElement('tr');
+
+        let actionBadge = '';
+        if (log.action === 'Exportar') {
+          actionBadge = `<span class="badge badge-exportar"><i class="fa-solid fa-file-excel"></i> Exportar</span>`;
+        } else if (log.action === 'Eliminar') {
+          actionBadge = `<span class="badge badge-eliminar"><i class="fa-solid fa-trash-can"></i> Eliminar</span>`;
+        }
+
+        let backupBtn = '';
+        if (log.backupUrl) {
+          backupBtn = `<br><a href="${log.backupUrl}" target="_blank" class="btn btn-secondary btn-xs" style="margin-top: 0.5rem;"><i class="fa-solid fa-cloud-arrow-down"></i> Descargar Respaldo</a>`;
+        }
+
+        tr.innerHTML = `
+          <td><strong>${log.username}</strong></td>
+          <td>${actionBadge}</td>
+          <td>${log.details}${backupBtn}</td>
+          <td>${date.toLocaleString()}</td>
+        `;
+        return tr;
+      });
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Error al cargar bitácora</td></tr>';
+    }
   }
 
   // Admins CRUD
