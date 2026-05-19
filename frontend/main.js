@@ -687,6 +687,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const qrModal = document.getElementById('qr-modal');
+  if (qrModal) {
+    qrModal.addEventListener('click', (e) => {
+      if (e.target === qrModal) {
+        qrModal.classList.remove('active');
+      }
+    });
+  }
+
   const openActivityModal = () => activityModal.classList.add('active');
   const closeActivityModal = () => {
     activityModal.classList.remove('active');
