@@ -194,6 +194,14 @@ router.post('/attendance', async (req, res) => {
     if (!user.isActive) return res.status(403).json({ message: 'El empleado está inactivo' });
 
     const lastAttendance = await Attendance.findOne({ user: user._id, activity: selectedActivity }).sort({ timestamp: -1 });
+    
+    // Evitar registros duplicados o accidentales en un intervalo menor a 15 segundos (cooldown)
+    if (lastAttendance && (Date.now() - new Date(lastAttendance.timestamp).getTime()) < 15000) {
+      return res.status(400).json({ 
+        message: `Ya has registrado tu ${lastAttendance.type === 'Entrada' || lastAttendance.type === 'Inicio' ? 'entrada' : 'salida'} hace unos segundos. Por favor, espera.` 
+      });
+    }
+
     let type = 'Entrada';
     if (selectedActivity === 'Jornada Laboral') {
       if (lastAttendance && lastAttendance.type === 'Entrada') {
