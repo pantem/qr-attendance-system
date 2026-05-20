@@ -209,7 +209,14 @@ router.post('/attendance', async (req, res) => {
     // Subir a Cloudinary
     let photoUrl = photo;
     if (photo.startsWith('data:image')) {
-      const uploadRes = await cloudinary.uploader.upload(photo, { folder: 'qr_attendance' });
+      const uploadRes = await cloudinary.uploader.upload(photo, { 
+        folder: 'qr_attendance',
+        transformation: [
+          { width: 640, height: 480, crop: 'limit' },
+          { quality: 'auto' },
+          { fetch_format: 'auto' }
+        ]
+      });
       photoUrl = uploadRes.secure_url;
     }
 

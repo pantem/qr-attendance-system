@@ -98,8 +98,22 @@ export function initScanner() {
     const scannerVideo = document.querySelector('#reader video');
     if (!scannerVideo) return '';
     
-    canvasElem.width = scannerVideo.videoWidth || 640;
-    canvasElem.height = scannerVideo.videoHeight || 480;
+    const maxDimension = 640;
+    let width = scannerVideo.videoWidth || 640;
+    let height = scannerVideo.videoHeight || 480;
+    
+    if (width > maxDimension || height > maxDimension) {
+      if (width > height) {
+        height = Math.round((height * maxDimension) / width);
+        width = maxDimension;
+      } else {
+        width = Math.round((width * maxDimension) / height);
+        height = maxDimension;
+      }
+    }
+    
+    canvasElem.width = width;
+    canvasElem.height = height;
     const ctx = canvasElem.getContext("2d");
     ctx.drawImage(scannerVideo, 0, 0, canvasElem.width, canvasElem.height);
     // Reducir calidad a 0.7 para evitar enviar payloads excesivamente pesados
