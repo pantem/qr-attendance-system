@@ -258,6 +258,97 @@ router.get('/attendance', protect, async (req, res) => {
   }
 });
 
+// GET /api/presence/status - Conteo y lista de personal dentro/fuera del edificio
+router.get('/presence/status', protect, async (req, res) => {
+  try {
+    const activeUsersPresence = await User.aggregate([
+      { $match: { isActive: true } },
+      {
+        $lookup: {
+          from: "attendances",
+          let: { userId: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$user", "$$userId"] } } },
+            { $sort: { timestamp: -1 } },
+            { $limit: 1 }
+          ],
+          as: "lastAttendance"
+        }
+      },
+      {
+        $project: {
+          name: 1,
+          identifier: 1,
+          area: 1,
+          position: 1,
+          lastRecord: { $arrayElemAt: ["$lastAttendance", 0] }
+        }
+      }
+    ]);
+
+    // Obtener actividades que marcan fuera del edificio
+    const fieldActivities = await Activity.find({ marcaFueraEdificio: true });
+    const fieldActivityNames = fieldActivities.map(a => a.name);
+
+    let insideCount = 0;
+    let outsideCount = 0;
+    const insideList = [];
+    const outsideList = [];
+
+    for (const u of activeUsersPresence) {
+      let isInside = false;
+      const lastRecord = u.lastRecord;
+
+      if (lastRecord) {
+        if (lastRecord.type === 'Entrada') {
+          isInside = true;
+        } else if (lastRecord.type === 'Salida') {
+          isInside = false;
+        } else if (lastRecord.type === 'Fin') {
+          isInside = true;
+        } else if (lastRecord.type === 'Inicio') {
+          if (fieldActivityNames.includes(lastRecord.activity)) {
+            isInside = false;
+          } else {
+            isInside = true;
+          }
+        }
+      }
+
+      const userData = {
+        _id: u._id,
+        name: u.name,
+        identifier: u.identifier,
+        area: u.area,
+        position: u.position,
+        lastRecord: lastRecord ? {
+          type: lastRecord.type,
+          activity: lastRecord.activity,
+          timestamp: lastRecord.timestamp
+        } : null
+      };
+
+      if (isInside) {
+        insideCount++;
+        insideList.push(userData);
+      } else {
+        outsideCount++;
+        outsideList.push(userData);
+      }
+    }
+
+    res.json({
+      insideCount,
+      outsideCount,
+      totalActiveUsers: activeUsersPresence.length,
+      insideList,
+      outsideList
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener estatus de presencia', error: error.message });
+  }
+});
+
 // --- RUTAS DE ACTIVIDADES ---
 
 // GET /api/activities - Listar actividades (Público para el escáner)
@@ -283,13 +374,16 @@ router.get('/activities/all', protect, async (req, res) => {
 // POST /api/activities - Crear actividad (Solo admin)
 router.post('/activities', protect, async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, marcaFueraEdificio } = req.body;
     if (!name) return res.status(400).json({ message: 'El nombre es requerido' });
 
     const exists = await Activity.findOne({ name });
     if (exists) return res.status(400).json({ message: 'La actividad ya existe' });
 
-    const newActivity = new Activity({ name });
+    const newActivity = new Activity({ 
+      name, 
+      marcaFueraEdificio: marcaFueraEdificio === true || marcaFueraEdificio === 'true'
+    });
     await newActivity.save();
 
     res.json({ message: 'Actividad creada con éxito', activity: newActivity });
@@ -301,8 +395,16 @@ router.post('/activities', protect, async (req, res) => {
 // PUT /api/activities/:id - Editar actividad (Solo admin)
 router.put('/activities/:id', protect, async (req, res) => {
   try {
-    const { name, isActive } = req.body;
-    const activity = await Activity.findByIdAndUpdate(req.params.id, { name, isActive }, { new: true });
+    const { name, isActive, marcaFueraEdificio } = req.body;
+    const activity = await Activity.findByIdAndUpdate(
+      req.params.id, 
+      { 
+        name, 
+        isActive, 
+        marcaFueraEdificio: marcaFueraEdificio === true || marcaFueraEdificio === 'true'
+      }, 
+      { new: true }
+    );
     if (!activity) return res.status(404).json({ message: 'Actividad no encontrada' });
     res.json({ message: 'Actividad actualizada', activity });
   } catch (error) {

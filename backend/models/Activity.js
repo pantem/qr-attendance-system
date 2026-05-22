@@ -9,7 +9,12 @@ const activitySchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  marcaFueraEdificio: {
+    type: Boolean,
+    default: false
   }
 });
 
 module.exports = mongoose.model('Activity', activitySchema);
+

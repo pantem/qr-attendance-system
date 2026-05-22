@@ -330,12 +330,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (view.id === targetViewId) view.classList.add('active-view');
       });
       if (targetViewId === 'users-view') loadUsers();
-      else if (targetViewId === 'reports-view') loadReports();
+      else if (targetViewId === 'reports-view') { loadReports(); startPresencePolling(); }
       else if (targetViewId === 'admins-view') loadAdmins();
       else if (targetViewId === 'activities-view') loadActivities();
       else if (targetViewId === 'terminals-view') loadTerminals();
       else if (targetViewId === 'bitacora-view') loadAuditLogs();
       else if (targetViewId === 'scanner-view') loadActivityOptions();
+
+      // Detener el polling de presencia si salimos de la vista de Reportes
+      if (targetViewId !== 'reports-view') stopPresencePolling();
 
       // Close sidebar on mobile
       if (window.innerWidth <= 768) {
@@ -584,6 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.querySelector('#reports-table tbody');
     tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
     try {
+      updatePresenceWidget();
       const res = await fetch(`${API_URL}/attendance`, { headers: getAuthHeaders() });
       const records = await res.json();
       tbody.innerHTML = '';
@@ -592,6 +596,139 @@ document.addEventListener('DOMContentLoaded', () => {
       loadedAttendanceRecords = records;
       applyLocalReportFilter();
     } catch (err) { tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--danger);">Error</td></tr>'; }
+  }
+
+  let cachedPresenceData = null;
+  let presencePollingInterval = null;
+
+  function startPresencePolling() {
+    stopPresencePolling(); // Evitar intervalos duplicados
+    presencePollingInterval = setInterval(() => {
+      const activeView = document.querySelector('.view.active-view');
+      if (activeView && activeView.id === 'reports-view') {
+        updatePresenceWidget();
+      } else {
+        stopPresencePolling();
+      }
+    }, 30000); // Cada 30 segundos
+  }
+
+  function stopPresencePolling() {
+    if (presencePollingInterval) {
+      clearInterval(presencePollingInterval);
+      presencePollingInterval = null;
+    }
+  }
+
+  async function updatePresenceWidget() {
+    const presenceCountEl = document.getElementById('presence-count');
+    if (!presenceCountEl) return;
+    try {
+      const res = await fetch(`${API_URL}/presence/status`, { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        cachedPresenceData = data;
+        presenceCountEl.textContent = data.insideCount;
+        
+        const modalInsideEl = document.getElementById('modal-inside-count');
+        const modalOutsideEl = document.getElementById('modal-outside-count');
+        if (modalInsideEl) modalInsideEl.textContent = data.insideCount;
+        if (modalOutsideEl) modalOutsideEl.textContent = data.outsideCount;
+      }
+    } catch (err) {
+      console.error('Error al actualizar presencia:', err);
+    }
+  }
+
+  const presenceModal = document.getElementById('presence-modal');
+  const btnViewPresenceDetail = document.getElementById('btn-view-presence-detail');
+  const btnClosePresenceModal = document.getElementById('btn-close-presence-modal');
+  const tabInside = document.getElementById('tab-inside');
+  const tabOutside = document.getElementById('tab-outside');
+  let currentPresenceTab = 'inside';
+
+  if (btnViewPresenceDetail) {
+    btnViewPresenceDetail.addEventListener('click', async () => {
+      presenceModal.classList.add('active');
+      currentPresenceTab = 'inside';
+      
+      tabInside.classList.replace('btn-secondary', 'btn-primary');
+      tabOutside.classList.replace('btn-primary', 'btn-secondary');
+      
+      await updatePresenceWidget();
+      renderPresenceList();
+    });
+  }
+
+  if (btnClosePresenceModal) {
+    btnClosePresenceModal.addEventListener('click', () => {
+      presenceModal.classList.remove('active');
+    });
+  }
+
+  if (tabInside) {
+    tabInside.addEventListener('click', () => {
+      currentPresenceTab = 'inside';
+      tabInside.classList.replace('btn-secondary', 'btn-primary');
+      tabOutside.classList.replace('btn-primary', 'btn-secondary');
+      renderPresenceList();
+    });
+  }
+
+  if (tabOutside) {
+    tabOutside.addEventListener('click', () => {
+      currentPresenceTab = 'outside';
+      tabOutside.classList.replace('btn-secondary', 'btn-primary');
+      tabInside.classList.replace('btn-primary', 'btn-secondary');
+      renderPresenceList();
+    });
+  }
+
+  function renderPresenceList() {
+    const tbody = document.querySelector('#presence-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (!cachedPresenceData) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Cargando...</td></tr>';
+      return;
+    }
+
+    const list = currentPresenceTab === 'inside' ? cachedPresenceData.insideList : cachedPresenceData.outsideList;
+
+    if (list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">No hay personal ${currentPresenceTab === 'inside' ? 'dentro' : 'fuera'} del edificio</td></tr>`;
+      return;
+    }
+
+    list.forEach(user => {
+      const tr = document.createElement('tr');
+      
+      let movementTime = 'Sin registros hoy';
+      let movementType = 'Inactivo / Fuera';
+
+      if (user.lastRecord) {
+        movementTime = new Date(user.lastRecord.timestamp).toLocaleString();
+        
+        if (user.lastRecord.type === 'Entrada') {
+          movementType = `<span class="badge badge-entrada">Entrada</span>`;
+        } else if (user.lastRecord.type === 'Salida') {
+          movementType = `<span class="badge badge-salida">Salida</span>`;
+        } else if (user.lastRecord.type === 'Inicio') {
+          movementType = `<span class="badge badge-salida">Fuera: ${user.lastRecord.activity}</span>`;
+        } else if (user.lastRecord.type === 'Fin') {
+          movementType = `<span class="badge badge-entrada">Dentro: ${user.lastRecord.activity}</span>`;
+        }
+      }
+
+      tr.innerHTML = `
+        <td><strong>${user.name}</strong><br><small style="color: var(--text-muted)">${user.identifier}</small></td>
+        <td>${user.area || '-'}<br><small style="color: var(--text-muted)">${user.position || '-'}</small></td>
+        <td>${movementTime}</td>
+        <td>${movementType}</td>
+      `;
+      tbody.appendChild(tr);
+    });
   }
 
   const btnExportFiltered = document.getElementById('btn-export-filtered');
@@ -841,17 +978,19 @@ document.addEventListener('DOMContentLoaded', () => {
     activityModal.classList.remove('active');
     activityForm.reset();
     document.getElementById('activity-id').value = '';
+    document.getElementById('activity-outside').checked = false;
     document.getElementById('activity-modal-title').textContent = 'Nueva Actividad';
   };
 
   if (btnNewActivity) btnNewActivity.addEventListener('click', openActivityModal);
   if (btnCloseActivity) btnCloseActivity.addEventListener('click', closeActivityModal);
 
-  window.editActivity = (id, name, isActive) => {
+  window.editActivity = (id, name, isActive, marcaFueraEdificio) => {
     document.getElementById('activity-modal-title').textContent = 'Editar Actividad';
     document.getElementById('activity-id').value = id;
     document.getElementById('activity-name').value = name;
     document.getElementById('activity-status').value = isActive.toString();
+    document.getElementById('activity-outside').checked = marcaFueraEdificio === true;
     openActivityModal();
   };
 
@@ -879,8 +1018,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const id = document.getElementById('activity-id').value;
     const name = document.getElementById('activity-name').value;
     const isActive = document.getElementById('activity-status').value === 'true';
+    const marcaFueraEdificio = document.getElementById('activity-outside').checked;
 
-    const body = { name, isActive };
+    const body = { name, isActive, marcaFueraEdificio };
     const method = id ? 'PUT' : 'POST';
     const url = id ? `${API_URL}/activities/${id}` : `${API_URL}/activities`;
 
@@ -906,13 +1046,13 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadActivities() {
     const tbody = document.querySelector('#activities-table tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>';
     try {
       const res = await fetch(`${API_URL}/activities/all?t=${Date.now()}`, { headers: getAuthHeaders(), cache: 'no-store' });
       const activities = await res.json();
       tbody.innerHTML = '';
       if (activities.length === 0) {
-        return tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay actividades registradas</td></tr>';
+        return tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay actividades registradas</td></tr>';
       }
 
       renderTableWithPagination('activities', activities, '#activities-table tbody', 'activities-pagination', act => {
@@ -926,9 +1066,14 @@ document.addEventListener('DOMContentLoaded', () => {
               ${act.isActive ? 'Activa' : 'Inactiva'}
             </span>
           </td>
+          <td style="text-align: center;">
+            <span class="badge ${act.marcaFueraEdificio ? 'badge-salida' : 'badge-neutral'}">
+              ${act.marcaFueraEdificio ? 'Sí' : 'No'}
+            </span>
+          </td>
           <td><small style="color: var(--text-muted)">${act._id}</small></td>
           <td>
-            <button class="btn-icon" title="Editar" onclick="editActivity('${act._id}', '${act.name}', ${act.isActive})">
+            <button class="btn-icon" title="Editar" onclick="editActivity('${act._id}', '${act.name.replace(/'/g, "\\'")}', ${act.isActive}, ${act.marcaFueraEdificio || false})">
               <i class="fa-solid fa-pen"></i>
             </button>
             <button class="btn-icon delete" title="Eliminar" onclick="deleteActivity('${act._id}')">
@@ -939,7 +1084,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return tr;
       });
     } catch (err) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Error al cargar actividades</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--danger);">Error al cargar actividades</td></tr>';
     }
   }
 
