@@ -90,7 +90,7 @@ router.post('/users/upload', protect, upload.single('file'), async (req, res) =>
       };
 
       if (!user) {
-        const qrDataURL = await qrcode.toDataURL(identifier);
+        const qrDataURL = await qrcode.toDataURL(identifier, { width: 512, errorCorrectionLevel: 'H', margin: 2 });
         user = new User({ ...userData, identifier, qrCode: qrDataURL });
         await user.save();
         createdCount++;
@@ -131,7 +131,7 @@ router.post('/users', protect, async (req, res) => {
       if (exists) return res.status(400).json({ message: 'Ese identificador ya está en uso' });
     }
 
-    const qrDataURL = await qrcode.toDataURL(identifier);
+    const qrDataURL = await qrcode.toDataURL(identifier, { width: 512, errorCorrectionLevel: 'H', margin: 2 });
 
     const newUser = new User({
       name, identifier, area, position, employeeType, qrCode: qrDataURL
