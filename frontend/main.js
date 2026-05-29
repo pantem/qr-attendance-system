@@ -492,6 +492,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (identifierField) identifierField.readOnly = false;
   };
 
+  document.getElementById('btn-regenerate-qrs').addEventListener('click', async () => {
+    if (!confirm('¿Regenerar los QRs de todos los empleados? Esta acción no se puede deshacer.')) return;
+    const btn = document.getElementById('btn-regenerate-qrs');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Regenerando...';
+    try {
+      const res = await fetch(`${API_URL}/users/regenerate-qrs`, { method: 'POST', headers: getAuthHeaders() });
+      const data = await res.json();
+      if (res.ok) { alert(data.message); loadUsers(); }
+      else throw new Error(data.message);
+    } catch (err) { alert('Error: ' + err.message); }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Regenerar QRs';
+  });
+
   btnNew.addEventListener('click', () => {
     document.getElementById('modal-title').textContent = 'Nuevo Empleado';
     openModal();

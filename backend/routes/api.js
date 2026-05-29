@@ -680,4 +680,27 @@ router.delete('/attendance/purge', protect, async (req, res) => {
   }
 });
 
+// POST /api/users/regenerate-qrs - Regenerar QRs de todos los empleados
+router.post('/users/regenerate-qrs', protect, async (req, res) => {
+  try {
+    const qrOpts = { width: 512, errorCorrectionLevel: 'H', margin: 2 };
+    const users = await User.find({ qrCode: { $exists: true, $ne: null } });
+    let updated = 0;
+
+    for (const user of users) {
+      try {
+        const qrDataURL = await qrcode.toDataURL(user.identifier, qrOpts);
+        await User.updateOne({ _id: user._id }, { $set: { qrCode: qrDataURL } });
+        updated++;
+      } catch (err) {
+        console.error(`Error con ${user.identifier}: ${err.message}`);
+      }
+    }
+
+    res.json({ message: `${updated} QRs regenerados exitosamente` });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al regenerar QRs', error: error.message });
+  }
+});
+
 module.exports = router;
