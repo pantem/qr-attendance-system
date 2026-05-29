@@ -83,7 +83,7 @@ export async function loadActivityOptions() {
 }
 
 export function initScanner() {
-  const html5QrCode = new Html5Qrcode("reader");
+  const html5QrCode = new Html5Qrcode("reader", { useBarCodeDetectorIfSupported: true });
   const canvasElem = document.getElementById("photo-canvas");
   const statusPanel = document.getElementById("scan-status");
   const countdownOverlay = document.getElementById("countdown-overlay");
