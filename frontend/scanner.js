@@ -227,8 +227,16 @@ export function initScanner() {
     }, 4000);
   };
 
-  // Configuración del escáner - sin qrbox para eliminar el cuadro blanco pequeño y escanear todo el cuadro
-  const config = { fps: 10 };
+  // Configuración del escáner
+  const config = {
+    fps: 20,
+    disableFlip: true,
+    videoConstraints: {
+      facingMode: "user",
+      width: { min: 640, ideal: 1280, max: 1920 },
+      height: { min: 480, ideal: 720, max: 1080 }
+    }
+  };
   
   html5QrCode.start({ facingMode: "user" }, config, onScanSuccess)
     .catch(err => {
