@@ -232,13 +232,13 @@ export function initScanner() {
     fps: 20,
     disableFlip: true,
     videoConstraints: {
-      facingMode: "user",
+      facingMode: "environment",
       width: { min: 640, ideal: 1280, max: 1920 },
       height: { min: 480, ideal: 720, max: 1080 }
     }
   };
   
-  html5QrCode.start({ facingMode: "user" }, config, onScanSuccess)
+  html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
     .catch(err => {
       console.error("Error iniciando escáner", err);
       statusPanel.innerHTML = `
