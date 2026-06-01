@@ -1,0 +1,157 @@
+PLAN DE INTEGRACIÓN: HUELLA DIGITAL + FOTO
+============================================
+
+Reemplazar el escaneo QR por autenticación con huella digital,
+manteniendo la captura de fotografía con la cámara.
+
+Requerimientos de Hardware
+--------------------------
+- Lector de huellas digitales USB compatible con SDK web
+  Opciones recomendadas:
+  * DigitalPersona U.are.U 4500 / 5100
+  * Futronic FS80 / FS88
+  * Suprema SFU-500
+  (Deben tener soporte para WebAuthn o SDK con bridge local)
+
+Arquitectura Propuesta
+----------------------
+
+    [Navegador] <--WebSocket/HTTP--> [Bridge local (Electron/Node)]
+                                        |
+                                    [Lector de huella USB]
+                                        |
+                                    [SDK del fabricante]
+
+
+Opción A (Recomendada) — WebAuthn
+==================================
+Usar WebAuthn API ( Fingerprint o Windows Hello ) que funciona
+directamente en el navegador sin software adicional.
+
+Ventajas:
+- No requiere instalar nada en el cliente
+- Funciona en Chrome, Edge, Firefox
+- La huella nunca sale del dispositivo
+- El identificador del usuario se almacena en el dispositivo
+
+Desventajas:
+- No funciona con lectores USB externos genéricos
+- Requiere sensor biométrico integrado o Windows Hello
+- El "identificador" es un credentialId, no el ID del empleado -- hay
+  que hacer una vinculación previa (registro) entre credentialId y
+  empleado.
+
+Flujo con WebAuthn:
+
+  Registro (solo una vez por empleado):
+  1. Admin crea empleado (igual que ahora)
+  2. Empleado se para frente al terminal con lector biométrico
+  3. App llama a navigator.credentials.create()
+  4. Se guarda el credentialId + employeeId en MongoDB
+
+  Asistencia (diario):
+  1. App llama a navigator.credentials.get() con los credentialIds
+     de los empleados activos
+  2. Usuario coloca su huella
+  3. WebAuthn devuelve el credentialId firmado
+  4. App busca el employeeId asociado a ese credentialId
+  5. Toma la foto con la cámara (código takePhoto() ya existe)
+  6. Envía { identifier: employeeId, photo, activity } al endpoint
+     POST /api/attendance (ya existe, sin cambios)
+
+
+Opción B — Bridge local con lector USB
+=======================================
+Usar un pequeño servidor local (Electron o Node.js) que se comunica
+con el lector via SDK del fabricante y expone un WebSocket al frontend.
+
+Ventajas:
+- Funciona con cualquier lector USB con SDK
+- Control total sobre el hardware
+
+Desventajas:
+- Requiere instalar runtime (Electron/Node) + SDK del fabricante
+- Más complejo de mantener
+- La huella viaja por la red local
+
+Flujo con Bridge local:
+
+  Bridge (Electron/Node):
+  1. Escucha conexiones WebSocket en localhost:PORT
+  2. Expone métodos: registerFingerprint(userId), verifyFingerprint()
+  3. Comunica con el lector via SDK nativo (C/C++, C#)
+
+  Frontend:
+  1. Conecta al WebSocket del bridge
+  2. Para asistencia: llama a verifyFingerprint()
+  3. Bridge devuelve userId
+  4. Toma foto y envía a POST /api/attendance
+
+
+Cambios necesarios en la base de datos
+---------------------------------------
+Nueva colección o campo en User:
+  fingerprints: [
+    {
+      credentialId: String,    // (WebAuthn)
+      publicKey: String,       // (WebAuthn)
+      deviceId: String,        // Si hay múltiples terminales
+      registeredAt: Date
+    }
+  ]
+
+
+Cambios en backend (api.js)
+----------------------------
+1. POST /api/fingerprints/register
+   - Recibe: credentialId, employeeId (WebAuthn)
+   - Guarda la relación en BD
+2. GET /api/fingerprints/credentials
+   - Devuelve todos los credentialIds activos para WebAuthn
+
+(No se modifican las rutas de attendance, siguen igual)
+
+
+Cambios en frontend
+--------------------
+1. Crear fingerprint.js:
+   - Funciones WebAuthn: register() y authenticate()
+2. Modificar scanner.js / initScanner():
+   - En lugar de iniciar cámara + html5-qrcode, iniciar
+     WebAuthn o conectar WebSocket al bridge
+   - En onScanSuccess, llamar takePhoto() y enviar a API
+   - Reutilizar la lógica existente de countdown, statusPanel, etc.
+3. Agregar vista de "Registro de huella" para admins
+
+
+Resumen de archivos a crear/modificar
+--------------------------------------
+NUEVOS:
+  frontend/fingerprint.js        - Lógica WebAuthn (register, authenticate)
+  backend/routes/fingerprints.js - Rutas para guardar/recuperar credentials
+
+MODIFICAR:
+  frontend/scanner.js            - Reemplazar html5-qrcode por WebAuthn
+  frontend/index.html            - Posible nueva vista/panel
+  backend/routes/api.js          - Agregar rutas de fingerprints
+  backend/models/User.js         - Agregar campo fingerprints[]
+  backend/server.js              - Montar nuevas rutas
+
+REUTILIZAR (sin cambios):
+  frontend/main.js               - takePhoto(), statusPanel, processAttendance()
+  backend/routes/api.js          - POST /api/attendance (ya recibe identifier + photo)
+  backend/models/Attendance.js   - Sin cambios
+
+
+Tiempo estimado de implementación
+----------------------------------
+- WebAuthn: 3-5 días (incluyendo pruebas con distintos dispositivos)
+- Bridge local: 2-3 semanas (depende del SDK del fabricante)
+
+
+Recomendación
+-------------
+Comenzar con WebAuthn (Opción A). No requiere hardware extra si los
+dispositivos tienen lector de huellas integrado (Windows Hello,
+macOS Touch ID, Android fingerprint). La implementación es puramente
+web y no necesita software externo.
