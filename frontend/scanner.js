@@ -237,9 +237,28 @@ export function initScanner() {
     }
   };
 
+  let currentFacingMode = "environment";
+
   const startScanner = (cameraConfig) => {
     return html5QrCode.start(cameraConfig, config, onScanSuccess);
   };
+
+  const switchCamera = async () => {
+    if (isProcessing) return;
+    try {
+      await html5QrCode.stop();
+      currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+      await html5QrCode.start({ facingMode: currentFacingMode }, config, onScanSuccess);
+    } catch (err) {
+      currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+      console.error("Error al cambiar cámara", err);
+    }
+  };
+
+  const switchBtn = document.getElementById("btn-switch-camera");
+  if (switchBtn) {
+    switchBtn.addEventListener("click", switchCamera);
+  }
 
   startScanner({ facingMode: "environment" })
     .catch(() => startScanner(undefined))
