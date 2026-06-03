@@ -227,13 +227,19 @@ export function initScanner() {
     }, 4000);
   };
 
+  const makeConfig = (facingMode) => ({
+    fps: 20,
+    disableFlip: true,
+    qrbox: { width: 300, height: 300 },
+    videoConstraints: {
+      facingMode,
+      width: { ideal: 640, max: 1280 },
+      height: { ideal: 480, max: 720 }
+    }
+  });
+
   let currentFacingMode = "environment";
   let scannerReady = false;
-
-  const config = {
-    fps: 20,
-    disableFlip: true
-  };
 
   const switchCamera = async () => {
     if (isProcessing || !scannerReady) return;
@@ -242,7 +248,11 @@ export function initScanner() {
       scannerReady = false;
       await new Promise(r => setTimeout(r, 300));
       currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
-      await html5QrCode.start({ facingMode: currentFacingMode }, config, onScanSuccess);
+      await html5QrCode.start(
+        { facingMode: currentFacingMode },
+        makeConfig(currentFacingMode),
+        onScanSuccess
+      );
       scannerReady = true;
     } catch (err) {
       console.error("Error al cambiar cámara", err);
@@ -250,7 +260,11 @@ export function initScanner() {
     }
   };
 
-  html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+  html5QrCode.start(
+    { facingMode: "environment" },
+    makeConfig("environment"),
+    onScanSuccess
+  )
     .then(() => { scannerReady = true; })
     .catch(err => {
       console.error("Error iniciando escáner", err);
