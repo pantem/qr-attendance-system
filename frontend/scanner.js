@@ -56,8 +56,8 @@ export async function loadActivityOptions() {
       
       btn.addEventListener("click", () => {
         updateSelectedActivity(act.name);
-    });
-}
+      });
+      
       container.appendChild(btn);
     });
 
