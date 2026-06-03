@@ -227,22 +227,20 @@ export function initScanner() {
     }, 4000);
   };
 
-  let currentCameraId = null;
+  let currentFacingMode = "environment";
   let scannerReady = false;
 
-  const makeConfig = (deviceId) => ({
-    fps: 20,
-    disableFlip: true,
-    videoConstraints: {
-      deviceId: { exact: deviceId },
+  const config = { fps: 20, disableFlip: true };
+
+  const setResolution = () =>
+    html5QrCode.applyVideoConstraints({
       width: { ideal: 640, max: 1280 },
       height: { ideal: 480, max: 720 }
-    }
-  });
+    }).catch(() => {});
 
-  const startCamera = async (deviceId) => {
-    await html5QrCode.start(deviceId, makeConfig(deviceId), onScanSuccess);
-  };
+  const startCamera = (facingMode) =>
+    html5QrCode.start({ facingMode }, config, onScanSuccess)
+      .then(() => setResolution());
 
   const switchCamera = async () => {
     if (isProcessing || !scannerReady) return;
@@ -250,39 +248,26 @@ export function initScanner() {
       await html5QrCode.stop();
       scannerReady = false;
       await new Promise(r => setTimeout(r, 300));
-
-      const cameras = await Html5Qrcode.getCameras();
-      if (cameras.length > 1) {
-        const idx = cameras.findIndex(c => c.id === currentCameraId);
-        const next = cameras[(idx + 1) % cameras.length];
-        currentCameraId = next.id;
-      }
-      await startCamera(currentCameraId);
+      currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+      await startCamera(currentFacingMode);
       scannerReady = true;
     } catch (err) {
       console.error("Error al cambiar cámara", err);
+      currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
     }
   };
 
-  (async () => {
-    try {
-      const cameras = await Html5Qrcode.getCameras();
-      if (cameras.length === 0) throw new Error("No hay cámaras");
-      const rear = cameras.find(c =>
-        /back|trás|environment|trasera/i.test(c.label)
-      );
-      currentCameraId = (rear || cameras[0]).id;
-      await startCamera(currentCameraId);
-      scannerReady = true;
-    } catch (err) {
+  startCamera("environment")
+    .catch(() => startCamera("user"))
+    .then(() => { scannerReady = true; })
+    .catch(err => {
       console.error("Error iniciando escáner", err);
       statusPanel.innerHTML = `
         <i class="fa-solid fa-triangle-exclamation fa-3x" style="color: var(--danger); margin-bottom: 1rem;"></i>
         <h3 style="color: var(--danger)">Error de Cámara</h3>
         <p>Por favor permite el acceso a la cámara y recarga la página.</p>
       `;
-    }
-  })();
+    });
 
   const switchBtn = document.getElementById("btn-switch-camera");
   if (switchBtn) {
