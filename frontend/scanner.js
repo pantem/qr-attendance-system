@@ -56,8 +56,8 @@ export async function loadActivityOptions() {
       
       btn.addEventListener("click", () => {
         updateSelectedActivity(act.name);
-      });
-      
+    });
+}
       container.appendChild(btn);
     });
 
@@ -232,13 +232,17 @@ export function initScanner() {
     fps: 20,
     disableFlip: true,
     videoConstraints: {
-      facingMode: "environment",
-      width: { min: 640, ideal: 1280, max: 1920 },
-      height: { min: 480, ideal: 720, max: 1080 }
+      width: { ideal: 1280, max: 1920 },
+      height: { ideal: 720, max: 1080 }
     }
   };
-  
-  html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+
+  const startScanner = (cameraConfig) => {
+    return html5QrCode.start(cameraConfig, config, onScanSuccess);
+  };
+
+  startScanner({ facingMode: "environment" })
+    .catch(() => startScanner(undefined))
     .catch(err => {
       console.error("Error iniciando escáner", err);
       statusPanel.innerHTML = `
