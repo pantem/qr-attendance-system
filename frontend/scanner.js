@@ -232,15 +232,7 @@ export function initScanner() {
 
   const config = {
     fps: 20,
-    disableFlip: true,
-    videoConstraints: {
-      width: { ideal: 1280, max: 1920 },
-      height: { ideal: 720, max: 1080 }
-    }
-  };
-
-  const startScanner = (cameraConfig) => {
-    return html5QrCode.start(cameraConfig, config, onScanSuccess);
+    disableFlip: true
   };
 
   const switchCamera = async () => {
@@ -250,23 +242,15 @@ export function initScanner() {
       scannerReady = false;
       await new Promise(r => setTimeout(r, 300));
       currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
-      await startScanner({ facingMode: currentFacingMode });
+      await html5QrCode.start({ facingMode: currentFacingMode }, config, onScanSuccess);
       scannerReady = true;
     } catch (err) {
       console.error("Error al cambiar cámara", err);
       currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
-      try {
-        await startScanner(undefined);
-        scannerReady = true;
-      } catch (err2) {
-        console.error("No se pudo reanudar", err2);
-      }
     }
   };
 
-  startScanner({ facingMode: "environment" })
-    .then(() => { scannerReady = true; })
-    .catch(() => startScanner(undefined))
+  html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
     .then(() => { scannerReady = true; })
     .catch(err => {
       console.error("Error iniciando escáner", err);
