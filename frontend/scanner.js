@@ -237,7 +237,8 @@ export function initScanner() {
     }
   };
 
-  let currentFacingMode = "environment";
+  let cameras = [];
+  let currentCameraId = null;
 
   const startScanner = (cameraConfig) => {
     return html5QrCode.start(cameraConfig, config, onScanSuccess);
@@ -247,11 +248,49 @@ export function initScanner() {
     if (isProcessing) return;
     try {
       await html5QrCode.stop();
-      currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
-      await html5QrCode.start({ facingMode: currentFacingMode }, config, onScanSuccess);
+      cameras = await html5QrCode.getCameras();
+      if (cameras.length < 2) {
+        await startScanner({ deviceId: { exact: currentCameraId } });
+        return;
+      }
+      const currentIdx = cameras.findIndex(c => c.id === currentCameraId);
+      const nextIdx = (currentIdx + 1) % cameras.length;
+      currentCameraId = cameras[nextIdx].id;
+      await html5QrCode.start({ deviceId: { exact: currentCameraId } }, config, onScanSuccess);
     } catch (err) {
-      currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
       console.error("Error al cambiar cámara", err);
+      try {
+        await html5QrCode.start({ deviceId: { exact: currentCameraId } }, config, onScanSuccess);
+      } catch (err2) {
+        console.error("No se pudo reanudar", err2);
+      }
+    }
+  };
+
+  const initCameras = async () => {
+    try {
+      cameras = await html5QrCode.getCameras();
+      if (cameras.length > 0) {
+        // Prefer rear camera
+        const rear = cameras.find(c =>
+          c.label.toLowerCase().includes('back') ||
+          c.label.toLowerCase().includes('trás') ||
+          c.label.toLowerCase().includes('environment')
+        );
+        currentCameraId = (rear || cameras[0]).id;
+        await html5QrCode.start({ deviceId: { exact: currentCameraId } }, config, onScanSuccess);
+      } else {
+        await startScanner(undefined);
+      }
+    } catch {
+      await startScanner(undefined).catch(err => {
+        console.error("Error iniciando escáner", err);
+        statusPanel.innerHTML = `
+          <i class="fa-solid fa-triangle-exclamation fa-3x" style="color: var(--danger); margin-bottom: 1rem;"></i>
+          <h3 style="color: var(--danger)">Error de Cámara</h3>
+          <p>Por favor permite el acceso a la cámara y recarga la página.</p>
+        `;
+      });
     }
   };
 
@@ -260,14 +299,5 @@ export function initScanner() {
     switchBtn.addEventListener("click", switchCamera);
   }
 
-  startScanner({ facingMode: "environment" })
-    .catch(() => startScanner(undefined))
-    .catch(err => {
-      console.error("Error iniciando escáner", err);
-      statusPanel.innerHTML = `
-        <i class="fa-solid fa-triangle-exclamation fa-3x" style="color: var(--danger); margin-bottom: 1rem;"></i>
-        <h3 style="color: var(--danger)">Error de Cámara</h3>
-        <p>Por favor permite el acceso a la cámara y recarga la página.</p>
-      `;
-    });
+  initCameras();
 }
