@@ -193,7 +193,14 @@ router.post('/attendance', async (req, res) => {
     if (!user) return res.status(404).json({ message: 'Código no reconocido' });
     if (!user.isActive) return res.status(403).json({ message: 'El empleado está inactivo' });
 
-    const lastAttendance = await Attendance.findOne({ user: user._id, activity: selectedActivity }).sort({ timestamp: -1 });
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const lastAttendance = await Attendance.findOne({
+      user: user._id,
+      activity: selectedActivity,
+      timestamp: { $gte: startOfToday }
+    }).sort({ timestamp: -1 });
     
     // Evitar registros duplicados o accidentales en un intervalo menor a 15 segundos (cooldown)
     if (lastAttendance && (Date.now() - new Date(lastAttendance.timestamp).getTime()) < 15000) {
