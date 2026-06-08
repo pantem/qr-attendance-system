@@ -730,13 +730,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (user.lastRecord.type === 'Salida') {
           movementType = `<span class="badge badge-salida">Salida</span>`;
         } else if (user.lastRecord.type === 'Inicio') {
-          if (user.lastRecord.isOutsideActivity) {
-            movementType = `<span class="badge badge-salida">Fuera: ${user.lastRecord.activity}</span>`;
-          } else {
-            movementType = `<span class="badge badge-neutral">Inicio: ${user.lastRecord.activity}</span>`;
-          }
+          movementType = `<span class="badge badge-entrada">Entrada</span>`;
         } else if (user.lastRecord.type === 'Fin') {
-          movementType = `<span class="badge badge-entrada">Dentro: ${user.lastRecord.activity}</span>`;
+          movementType = `<span class="badge badge-salida">Salida</span>`;
         }
       }
 
