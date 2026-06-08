@@ -318,7 +318,11 @@ router.get('/presence/status', protect, async (req, res) => {
       } else if (lastRecord.type === 'Salida') {
         isInside = false;
       } else if (lastRecord.type === 'Fin') {
-        isInside = true;
+        if (fieldActivityNames.includes(lastRecord.activity)) {
+          isInside = true;
+        } else {
+          isInside = false;
+        }
       } else if (lastRecord.type === 'Inicio') {
         if (fieldActivityNames.includes(lastRecord.activity)) {
           isInside = false;
