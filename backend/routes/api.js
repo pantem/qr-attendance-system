@@ -268,14 +268,20 @@ router.get('/attendance', protect, async (req, res) => {
 // GET /api/presence/status - Conteo y lista de personal dentro/fuera del edificio
 router.get('/presence/status', protect, async (req, res) => {
   try {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
     const activeUsersPresence = await User.aggregate([
       { $match: { isActive: true } },
       {
         $lookup: {
           from: "attendances",
-          let: { userId: "$_id" },
+          let: { userId: "$_id", today: startOfToday },
           pipeline: [
-            { $match: { $expr: { $eq: ["$user", "$$userId"] } } },
+            { $match: { $expr: { $and: [
+              { $eq: ["$user", "$$userId"] },
+              { $gte: ["$timestamp", "$$today"] }
+            ] } } },
             { $sort: { timestamp: -1 } },
             { $limit: 1 }
           ],
@@ -303,22 +309,21 @@ router.get('/presence/status', protect, async (req, res) => {
     const outsideList = [];
 
     for (const u of activeUsersPresence) {
-      let isInside = false;
       const lastRecord = u.lastRecord;
+      if (!lastRecord) continue;
 
-      if (lastRecord) {
-        if (lastRecord.type === 'Entrada') {
-          isInside = true;
-        } else if (lastRecord.type === 'Salida') {
+      let isInside = false;
+      if (lastRecord.type === 'Entrada') {
+        isInside = true;
+      } else if (lastRecord.type === 'Salida') {
+        isInside = false;
+      } else if (lastRecord.type === 'Fin') {
+        isInside = true;
+      } else if (lastRecord.type === 'Inicio') {
+        if (fieldActivityNames.includes(lastRecord.activity)) {
           isInside = false;
-        } else if (lastRecord.type === 'Fin') {
+        } else {
           isInside = true;
-        } else if (lastRecord.type === 'Inicio') {
-          if (fieldActivityNames.includes(lastRecord.activity)) {
-            isInside = false;
-          } else {
-            isInside = true;
-          }
         }
       }
 
@@ -328,11 +333,11 @@ router.get('/presence/status', protect, async (req, res) => {
         identifier: u.identifier,
         area: u.area,
         position: u.position,
-        lastRecord: lastRecord ? {
+        lastRecord: {
           type: lastRecord.type,
           activity: lastRecord.activity,
           timestamp: lastRecord.timestamp
-        } : null
+        }
       };
 
       if (isInside) {
