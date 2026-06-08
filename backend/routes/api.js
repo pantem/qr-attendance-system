@@ -336,7 +336,8 @@ router.get('/presence/status', protect, async (req, res) => {
         lastRecord: {
           type: lastRecord.type,
           activity: lastRecord.activity,
-          timestamp: lastRecord.timestamp
+          timestamp: lastRecord.timestamp,
+          isOutsideActivity: fieldActivityNames.includes(lastRecord.activity)
         }
       };
 
